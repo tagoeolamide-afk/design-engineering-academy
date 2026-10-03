@@ -22,7 +22,7 @@ import type {
   ModuleProject,
   PhaseId,
 } from '@/types/curriculum';
-import { LESSONS_PER_MODULE, MODULES_PER_PHASE, PHASE_IDS } from '@/types/curriculum';
+import { LESSONS_PER_MODULE, moduleNumbersForPhase, PHASE_IDS } from '@/types/curriculum';
 
 export function makeLesson(
   moduleNumber: number,
@@ -50,7 +50,7 @@ export function makeLesson(
     industryExamples: [],
     practicalWalkthrough: [],
     commonMistakes: [],
-    eliteConsiderations: [],
+    professionalConsideration: [],
     practicalExercise: {
       id: `exercise-${moduleNumber}-${lessonNumber}`,
       title: 'Exercise',
@@ -101,8 +101,10 @@ export function makeModule(
 ): CurriculumModule {
   const lessonCount = options.lessonCount ?? LESSONS_PER_MODULE;
 
-  /* Phases hold three modules each, so module 4 belongs to phase 2. */
-  const phaseIndex = Math.floor((moduleNumber - 1) / MODULES_PER_PHASE);
+  /* Phases are unevenly sized, so membership is looked up rather than divided. */
+  const phaseIndex = PHASE_IDS.findIndex((_, i) =>
+    moduleNumbersForPhase(i + 1).includes(moduleNumber),
+  );
   const phase = options.phase ?? PHASE_IDS[phaseIndex] ?? 'foundations';
 
   const lessons =

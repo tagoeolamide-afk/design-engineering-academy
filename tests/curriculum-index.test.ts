@@ -244,12 +244,20 @@ describe('related competencies', () => {
 });
 
 describe('phase module ranges', () => {
-  it('assigns three consecutive modules to each phase', () => {
+  it('assigns each phase the consecutive modules it was designed to hold', () => {
+    /* Deliberately uneven: the engineering phase needs four modules and the
+     * final phase only two. An even split would rush React and accessibility
+     * or pad the capstone. */
     expect(moduleNumbersForPhase(1)).toEqual([1, 2, 3]);
     expect(moduleNumbersForPhase(2)).toEqual([4, 5, 6]);
-    expect(moduleNumbersForPhase(3)).toEqual([7, 8, 9]);
-    expect(moduleNumbersForPhase(4)).toEqual([10, 11, 12]);
-    expect(moduleNumbersForPhase(5)).toEqual([13, 14, 15]);
+    expect(moduleNumbersForPhase(3)).toEqual([7, 8, 9, 10]);
+    expect(moduleNumbersForPhase(4)).toEqual([11, 12, 13]);
+    expect(moduleNumbersForPhase(5)).toEqual([14, 15]);
+  });
+
+  it('returns nothing for a phase number that does not exist', () => {
+    expect(moduleNumbersForPhase(0)).toEqual([]);
+    expect(moduleNumbersForPhase(6)).toEqual([]);
   });
 
   it('covers every module number exactly once across the five phases', () => {

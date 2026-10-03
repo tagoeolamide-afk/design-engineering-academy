@@ -17,7 +17,6 @@ import type { Prose } from './content-block';
 
 /** Fixed shape of the syllabus. The integrity checks in lib/curriculum enforce these. */
 export const LESSONS_PER_MODULE = 5;
-export const MODULES_PER_PHASE = 3;
 export const TOTAL_MODULES = 15;
 export const TOTAL_LESSONS = TOTAL_MODULES * LESSONS_PER_MODULE; // 75
 
@@ -39,16 +38,29 @@ export function isPhaseId(value: string): value is PhaseId {
 }
 
 /**
- * The module numbers a phase is responsible for: phase 1 owns 1..3, phase 2
- * owns 4..6, and so on.
+ * How many modules each phase owns, in phase order.
  *
- * Derived rather than declared, so the curriculum can show all fifteen module
- * slots — including the ones not yet authored — without inventing placeholder
- * content to hang them on.
+ * Declared rather than derived. The arc is not evenly divisible: the engineering
+ * phase needs four modules and the final phase only two, because splitting them
+ * evenly would either rush React and accessibility or pad the capstone. An
+ * arithmetic rule cannot express that, and the one that used to live here
+ * quietly assumed three everywhere.
  */
+export const MODULES_PER_PHASE: readonly number[] = [3, 3, 4, 3, 2];
+
+/** How many modules a phase owns, or 0 for a phase number that does not exist. */
+export function moduleCountForPhase(phaseNumber: number): number {
+  return MODULES_PER_PHASE[phaseNumber - 1] ?? 0;
+}
+
+/** The module numbers a phase is responsible for. */
 export function moduleNumbersForPhase(phaseNumber: number): readonly number[] {
-  const first = (phaseNumber - 1) * MODULES_PER_PHASE + 1;
-  return Array.from({ length: MODULES_PER_PHASE }, (_, offset) => first + offset);
+  const index = phaseNumber - 1;
+  const count = MODULES_PER_PHASE[index];
+  if (count === undefined) return [];
+
+  const first = MODULES_PER_PHASE.slice(0, index).reduce((total, n) => total + n, 1);
+  return Array.from({ length: count }, (_, offset) => first + offset);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -130,7 +142,30 @@ export interface Lesson {
   /** Brief callback to prior material, so lessons chain instead of standing alone. */
   readonly recap: Prose;
 
+  /**
+   * What the learner already holds that this lesson builds on.
+   *
+   * Separate from `recap`: the recap says what the last lesson covered, this
+   * says which of it is load-bearing here. Optional only because modules not
+   * yet rewritten to the current format do not have it; every rewritten lesson
+   * carries one.
+   */
+  readonly priorKnowledge?: Prose;
+
   readonly coreConcept: Prose;
+
+  /**
+   * Why this matters to someone who designs products.
+   *
+   * Placed before the mechanism on purpose. A designer who cannot see what a
+   * concept changes about their own work has no reason to read the
+   * implementation that follows.
+   */
+  readonly whyDesignersCare?: Prose;
+
+  /** The mechanism, introduced only after the intuition above has landed. */
+  readonly howItWorks?: Prose;
+
   readonly firstPrinciples: Prose;
   readonly designPerspective: Prose;
   readonly engineeringPerspective: Prose;
@@ -140,8 +175,17 @@ export interface Lesson {
   readonly industryExamples: readonly IndustryExample[];
   readonly practicalWalkthrough: Prose;
   readonly commonMistakes: readonly CommonMistake[];
-  /** What separates competent work from elite work on this topic. */
-  readonly eliteConsiderations: Prose;
+  /** What separates competent work from professional work on this topic. */
+  readonly professionalConsideration: Prose;
+
+  /**
+   * Optional depth, kept out of the main read.
+   *
+   * The main lesson has to stay finishable in five to ten minutes. Anything
+   * that would make a beginner stall belongs here, where it can be skipped
+   * without leaving a hole.
+   */
+  readonly goDeeper?: Prose;
 
   readonly practicalExercise: PracticalExercise;
   readonly reflectionQuestion: string;
@@ -163,6 +207,15 @@ export interface ModuleProject {
   readonly title: string;
   /** One or two sentences: what is being built. */
   readonly brief: string;
+  /** What the learner should be able to do afterwards that they could not before. */
+  readonly learnerGoal?: string;
+  /**
+   * The lessons this project assumes.
+   *
+   * Checked against course order, so a project can never ask for a skill the
+   * curriculum teaches later.
+   */
+  readonly prerequisiteLessonIds?: readonly string[];
   /** Why it is worth building — the situation the work answers. */
   readonly problem: string;
   readonly objectives: readonly string[];

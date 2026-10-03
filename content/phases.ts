@@ -1,8 +1,9 @@
 /**
  * Phase metadata: the five-part arc of the course.
  *
- * Each phase holds three modules of five lessons, which is what produces the
- * seventy-five lesson total asserted in types/curriculum.ts.
+ * Phases are deliberately uneven — 3, 3, 4, 3, 2 modules. The arc is not evenly
+ * divisible: splitting it evenly would either rush React and accessibility or
+ * pad the capstone. The sizes live in types/curriculum.ts.
  *
  * The `id` values are internal keys that lesson content, progress derivation,
  * and tests are written against; `title` is what the learner reads. They are
@@ -16,41 +17,41 @@ import { PHASE_IDS } from '@/types/curriculum';
 export const PHASES: Readonly<Record<PhaseId, Phase>> = {
   foundations: {
     id: 'foundations',
-    slug: 'build-the-mental-model',
+    slug: 'from-designer-to-interface-builder',
     phaseNumber: 1,
-    title: 'Build the Mental Model',
+    title: 'From Designer to Interface Builder',
     description:
-      'What an interface actually is underneath the picture of it: state, representation, transition, feedback, and constraints — plus the browser primitives everything else is built on.',
+      'How interfaces actually behave, the visual decisions behind them, and the HTML and CSS that put them in a browser. Everything here starts from something you can already see and click.',
     outcome:
-      'Can reason about an interface from first principles instead of copying patterns.',
+      'Can take a design and build it as a real, responsive interface in the browser.',
   },
   'interface-craft': {
     id: 'interface-craft',
-    slug: 'learn-to-build-interfaces',
+    slug: 'behaviour-and-logic',
     phaseNumber: 2,
-    title: 'Learn to Build Interfaces',
+    title: 'Behaviour and Logic',
     description:
-      'Turning a design into precise, resilient markup, styling, and layout. The gap between a screen that looks right in a mockup and a build that stays right under real content.',
-    outcome: 'Can build a screen that holds its quality under real, varied content.',
+      'Making interfaces respond: JavaScript, events, forms, waiting for data — and then the idea that ties it all together, which is what an interface is currently doing and why.',
+    outcome: 'Can give an interface real behaviour, and describe that behaviour before writing it.',
   },
   systems: {
     id: 'systems',
-    slug: 'component-thinking',
+    slug: 'modern-interface-engineering',
     phaseNumber: 3,
-    title: 'Component Thinking',
+    title: 'Modern Interface Engineering',
     description:
-      'Component boundaries, props as an API, composition, and tokens — the structure that lets an interface scale past a single screen without collapsing into configuration.',
-    outcome: 'Can design and implement a component system others could build on.',
+      'React, component boundaries, accessibility and design systems — the structure that lets an interface scale past a single screen without collapsing into configuration.',
+    outcome: 'Can design and implement an accessible component system others could build on.',
   },
   'interaction-and-motion': {
     id: 'interaction-and-motion',
-    slug: 'interaction-quality',
+    slug: 'real-product-complexity',
     phaseNumber: 4,
-    title: 'Interaction Quality',
+    title: 'Real Product Complexity',
     description:
-      'Behaviour over time: complex interaction patterns, accessible dynamic components, and motion that explains change rather than decorating it.',
+      'What real products are actually made of: data that loads and fails, dense tables, motion that explains change, and the performance and testing work that keeps it honest.',
     outcome:
-      'Can build interactions that feel considered and remain operable by keyboard and assistive technology.',
+      'Can build and defend an interface that holds up under real data and real use.',
   },
   'product-judgement': {
     id: 'product-judgement',
@@ -58,7 +59,7 @@ export const PHASES: Readonly<Record<PhaseId, Phase>> = {
     phaseNumber: 5,
     title: 'Advanced Design Engineering',
     description:
-      'Performance, product architecture, and the judgement to decide what should exist at all — the work that separates competent practice from senior practice.',
+      'Architecture, critique and the judgement to decide what should exist at all — plus working with AI as an implementation partner without surrendering the quality bar.',
     outcome: 'Can own an interface end to end and defend every decision in it.',
   },
 };

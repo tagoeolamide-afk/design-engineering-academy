@@ -21,6 +21,8 @@
  * code expects them.
  */
 
+import { CURRICULUM_VERSION } from '@/lib/curriculum/version';
+import { readLegacyArchive } from '@/lib/persistence/migrations';
 import type { ProgressState } from '@/types/progress';
 import type { Note } from '@/types/notes';
 import type { ResourceMark } from '@/types/resources';
@@ -54,7 +56,13 @@ export interface LearningState {
 }
 
 export const EMPTY_LEARNING_STATE_DATA: LearningStateData = {
-  progress: { lessons: {}, projects: {}, lastVisitedLessonId: null },
+  progress: {
+    lessons: {},
+    projects: {},
+    lastVisitedLessonId: null,
+    curriculumVersion: CURRICULUM_VERSION,
+    legacy: null,
+  },
   notes: {},
   resources: {},
   preferences: { theme: 'system' },
@@ -81,6 +89,9 @@ export function normalizeLearningStateData(value: unknown): LearningStateData {
     progress: {
       lessons: asRecord(progress.lessons) as ProgressState['lessons'],
       projects: asRecord(progress.projects) as ProgressState['projects'],
+      curriculumVersion:
+        typeof progress.curriculumVersion === 'number' ? progress.curriculumVersion : 0,
+      legacy: readLegacyArchive(progress.legacy),
       lastVisitedLessonId:
         typeof progress.lastVisitedLessonId === 'string'
           ? progress.lastVisitedLessonId

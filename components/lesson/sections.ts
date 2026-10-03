@@ -17,7 +17,22 @@ export interface LessonSectionDefinition {
 export const LESSON_SECTIONS: readonly LessonSectionDefinition[] = [
   { id: 'objectives', label: 'Objectives', has: (l) => l.objectives.length > 0 },
   { id: 'recap', label: 'Recap', has: (l) => l.recap.length > 0 },
-  { id: 'core-idea', label: 'Core idea', has: (l) => l.coreConcept.length > 0 },
+  {
+    id: 'prior-knowledge',
+    label: 'What you already know',
+    has: (l) => (l.priorKnowledge?.length ?? 0) > 0,
+  },
+  { id: 'core-idea', label: "Today's idea", has: (l) => l.coreConcept.length > 0 },
+  {
+    id: 'why-designers-care',
+    label: 'Why this matters to a designer',
+    has: (l) => (l.whyDesignersCare?.length ?? 0) > 0,
+  },
+  {
+    id: 'how-it-works',
+    label: 'How it works',
+    has: (l) => (l.howItWorks?.length ?? 0) > 0,
+  },
   {
     id: 'first-principles',
     label: 'From first principles',
@@ -41,9 +56,14 @@ export const LESSON_SECTIONS: readonly LessonSectionDefinition[] = [
   },
   { id: 'mistakes', label: 'Common mistakes', has: (l) => l.commonMistakes.length > 0 },
   {
-    id: 'elite',
-    label: 'What elite looks like',
-    has: (l) => l.eliteConsiderations.length > 0,
+    id: 'professional',
+    label: 'Professional consideration',
+    has: (l) => l.professionalConsideration.length > 0,
+  },
+  {
+    id: 'go-deeper',
+    label: 'Go deeper',
+    has: (l) => (l.goDeeper?.length ?? 0) > 0,
   },
   { id: 'exercise', label: 'Practical exercise', has: () => true },
   { id: 'reflection', label: 'Reflection', has: () => true },

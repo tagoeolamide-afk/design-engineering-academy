@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { CloudLoadError } from '@/components/cloud/cloud-load-error';
+import { CurriculumUpgradeNotice } from '@/components/curriculum/curriculum-upgrade-notice';
 import { SyncStatus } from '@/components/cloud/sync-status';
 import { Divider } from '@/components/ui/divider';
 import { CommandPalette } from './command-palette';
@@ -60,6 +61,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         {/* Only rendered when the cloud load failed; the application keeps
             working on whatever this device holds. */}
         <CloudLoadError />
+        {/* Only rendered when stored progress refers to an older curriculum. */}
+        <CurriculumUpgradeNotice />
         <main id="main" className="flex-1">
           {children}
         </main>

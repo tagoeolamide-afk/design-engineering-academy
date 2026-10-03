@@ -1,8 +1,10 @@
 /**
  * Module 07 — React Foundations.
  *
- * The component model itself: boundaries, props as an API, rendering as a
- * function of state, and the narrow set of cases that genuinely need an effect.
+ * Every lesson here is explicitly a continuation of something the learner
+ * already did by hand in Module 4 or modelled in Module 5. React is introduced
+ * as the answer to a problem they have personally experienced — keeping the
+ * screen in step with the data — rather than as a tool to be adopted.
  */
 
 import type { CurriculumModule, Lesson, ModuleProject } from '@/types/curriculum';
@@ -13,258 +15,277 @@ const MODULE_ID = 'module-07';
 /* Lesson 31                                                                   */
 /* -------------------------------------------------------------------------- */
 
-const LESSON_31: Lesson = {
-  id: 'lesson-07-01',
-  slug: 'components',
+const LESSON_1: Lesson = {
+  id: 'lesson-why-react-exists',
+  slug: 'why-react-exists',
   moduleId: MODULE_ID,
   lessonNumber: 1,
-  title: 'Components',
+  title: 'Why React Exists',
   summary:
-    'A component is a boundary. Drawing it around a repeated shape is easy and often wrong; drawing it around a responsibility is the actual skill.',
-  estimatedMinutes: 8,
-
+    'In Module 4 you updated the page by hand, step by step. React exists because that approach stops working — and the alternative is describing the result instead of the steps.',
+  estimatedMinutes: 9,
   objectives: [
-    'Describe a component as a function from props to described output.',
-    'Compose components rather than configuring one large component.',
-    'Choose boundaries from responsibility and change frequency.',
-    'Recognise a boundary drawn around appearance rather than behaviour.',
+    'Describe the problem that manual DOM updating creates as an interface grows.',
+    'Explain the difference between describing steps and describing a result.',
+    'Read a simple React component and say what it renders.',
+    'Explain what "the interface is a function of the data" means.',
   ],
-
-  prerequisiteConcepts: ['Rendering from state', 'Types as contracts'],
-  prerequisiteLessonIds: ['lesson-05-04', 'lesson-06-01'],
-
+  prerequisiteConcepts: [
+    'Changing the page from JavaScript, Module 4',
+    'State as facts, Module 5',
+    'Types and unions, Module 6',
+  ],
+  prerequisiteLessonIds: [
+    'lesson-events-clicks-and-user-input',
+    'lesson-objects-unions-and-safer-interface-states',
+  ],
   recap: [
     {
       kind: 'paragraph',
-      text: 'In Module 5 you built reconciliation by hand and counted what had to be remembered. React is that loop, generalised.',
+      text: 'Module 6 gave you types that make impossible states unwriteable. Before that, Module 4 had you updating the page by hand: find the element, change its text, toggle an attribute, keep the label in step.',
     },
   ],
-
+  priorKnowledge: [
+    {
+      kind: 'paragraph',
+      text: 'You wrote this in Module 4 lesson 17, and it worked:',
+    },
+    {
+      kind: 'code',
+      language: 'javascript',
+      code: 'details.hidden = isOpen;\ntoggle.textContent = isOpen ? "Show details" : "Hide details";\ntoggle.setAttribute("aria-expanded", String(!isOpen));',
+    },
+    {
+      kind: 'paragraph',
+      text: 'Three lines to keep three things in step for one disclosure. Hold that example; this lesson is about what happens to it at scale.',
+    },
+  ],
   coreConcept: [
     {
       kind: 'paragraph',
-      text: 'A component is a function that takes props and returns a description of what the interface should look like. It does not touch the DOM. React compares descriptions and applies the difference, which is why you write the destination rather than the journey.',
+      text: 'The problem is not any single update. It is that every piece of state has to be manually connected to every part of the screen it affects, and the number of those connections grows much faster than the interface does.',
     },
     {
       kind: 'paragraph',
-      text: 'Composition means building larger things by placing components inside one another, rather than adding options to one component. A page composed of six components is easier to change than one component with twenty props — and the props version is what happens when boundaries are avoided.',
+      text: 'A project list with a filter, a selection, a loading state and an inline editor has perhaps six pieces of state and twenty places on screen that depend on them. By hand, that is twenty connections to write and keep correct — and every new feature multiplies rather than adds.',
+    },
+    {
+      kind: 'paragraph',
+      text: 'React removes the connections. You describe what the screen should look like for a given state, and it works out what to change.',
+    },
+  ],
+  whyDesignersCare: [
+    {
+      kind: 'paragraph',
+      text: 'Because almost every "it only happens sometimes" interface bug is a missed connection.',
+    },
+    {
+      kind: 'paragraph',
+      text: 'The badge that did not update. The button that stayed disabled after the error cleared. The panel showing old data for a moment. Each is a place where the state changed and one of the things depending on it was not told.',
+    },
+    {
+      kind: 'paragraph',
+      text: 'React does not make interfaces faster to build, particularly. It makes this specific class of bug mostly stop happening, which is a bigger deal.',
+    },
+  ],
+  howItWorks: [
+    {
+      kind: 'paragraph',
+      text: 'The shift is from **imperative** — a list of steps — to **declarative** — a description of the result.',
+    },
+    {
+      kind: 'code',
+      language: 'javascript',
+      code: '// Module 4: the steps.\nif (isOpen) {\n  details.hidden = false;\n  toggle.textContent = "Hide details";\n} else {\n  details.hidden = true;\n  toggle.textContent = "Show details";\n}',
+    },
+    {
+      kind: 'code',
+      language: 'tsx',
+      code: '// React: the result.\nfunction Disclosure({ isOpen }: { isOpen: boolean }) {\n  return (\n    <>\n      <button>{isOpen ? "Hide details" : "Show details"}</button>\n      {isOpen && <div>Here are the details.</div>}\n    </>\n  );\n}',
+    },
+    {
+      kind: 'paragraph',
+      text: 'Line by line. `function Disclosure(...)` is a **component** — a function that returns what to show. Its input is an object of values, typed exactly as in Module 6.',
+    },
+    {
+      kind: 'paragraph',
+      text: 'The markup inside is **JSX**: HTML written in JavaScript. The braces drop a JavaScript value in, so `{isOpen ? ... : ...}` is the conditional from Module 4 lesson 18, used to choose text.',
+    },
+    {
+      kind: 'paragraph',
+      text: '`{isOpen && <div>…</div>}` renders the div only when `isOpen` is true — the `&&` from Module 4 again. `<>` and `</>` are an empty wrapper, needed only because a function must return one thing.',
+    },
+    {
+      kind: 'paragraph',
+      text: 'There is no instruction to change anything. The component says what the interface *is* for a given `isOpen`, and React makes the screen match.',
+    },
+  ],
+  firstPrinciples: [
+    {
+      kind: 'paragraph',
+      text: 'The idea underneath: **the interface is a function of the data**.',
+    },
+    {
+      kind: 'paragraph',
+      text: 'Given the same state, you get the same screen, every time. There is no accumulated history of changes that might have gone wrong — the screen is recomputed from the facts.',
     },
     {
       kind: 'callout',
       tone: 'insight',
-      body: 'A boundary should separate things that change for different reasons. Two things that always change together are one thing.',
+      body: 'This is the same discipline as Module 5, enforced by the tool. Nothing derived is stored, and the screen is derived from state rather than nudged towards it.',
     },
   ],
-
-  firstPrinciples: [
-    {
-      kind: 'paragraph',
-      text: 'Every boundary has a cost: a file, a name, an API, an indirection a reader must follow. It pays for itself when it isolates a reason to change, gives a concept a name worth having, or lets something be tested or reused independently.',
-    },
-    {
-      kind: 'paragraph',
-      text: 'Repetition alone does not pay for it. Two blocks that look alike but serve different purposes will diverge, and a component extracted from that coincidence grows conditionals until it is harder to read than the duplication was.',
-    },
-  ],
-
   designPerspective: [
     {
       kind: 'paragraph',
-      text: 'Designers draw boundaries constantly — a card, a modal, a toolbar — but those boundaries are visual containers, and visual containers do not always correspond to responsibilities.',
+      text: 'The design question barely changes, and that is the point.',
     },
     {
       kind: 'paragraph',
-      text: 'A useful reframing: a component is a thing you could describe to someone without pointing at the screen. If the only description available is "the box in the top right", the boundary is positional rather than conceptual.',
+      text: 'You still enumerate states and design each one. What changes is that the enumeration now maps directly onto code: a designed state becomes a value, and a designed screen becomes what the component returns for it. The gap between the design artefact and the implementation narrows considerably.',
     },
   ],
-
   engineeringPerspective: [
     {
-      kind: 'code',
-      language: 'tsx',
-      caption: 'Composition instead of configuration.',
-      code: `// Configuration: one component that must know every case.
-<Panel
-  title="Filters"
-  showFooter
-  footerAction="Clear"
-  collapsible
-  variant="sidebar"
-/>
-
-// Composition: the structure is expressed rather than described.
-<Panel>
-  <Panel.Header>Filters</Panel.Header>
-  <Panel.Body>
-    <FilterList filters={filters} onChange={setFilters} />
-  </Panel.Body>
-  <Panel.Footer>
-    <Button onClick={clear}>Clear</Button>
-  </Panel.Footer>
-</Panel>`,
+      kind: 'paragraph',
+      text: 'The engineering question is what it costs.',
     },
     {
       kind: 'paragraph',
-      text: 'The second version has no opinion about what a footer contains, so the next requirement — two buttons, a count, nothing at all — needs no change to Panel. The first version needs a new prop for each of those.',
+      text: 'React re-runs components when state changes and compares the result with what is on screen, updating only the differences. That comparison is not free, but it is predictable — and predictable beats the alternative, where correctness depends on nobody forgetting a connection.',
     },
   ],
-
   connectionBetweenBoth: [
     {
       kind: 'paragraph',
-      text: 'Component boundaries in code and component boundaries in a design file should mostly agree, and where they disagree it is worth asking which one is wrong. Usually the disagreement reveals that a visual grouping is hiding two responsibilities.',
+      text: 'React makes the design artefact and the implementation the same shape.',
     },
     {
       kind: 'paragraph',
-      text: 'Shared names matter more than shared structure. If a designer says "the row actions" and an engineer says "the ListItemToolbar", every conversation costs a translation.',
+      text: 'A designer who lists four states and a component that handles four states are now describing the same thing in two notations. That is why React is worth learning for someone whose background is design: it rewards exactly the thinking you already do.',
     },
   ],
-
   industryExamples: [
     {
-      id: 'example-compound-components',
-      source: 'Radix UI and similar primitives',
-      title: 'Structure expressed, not configured',
+      id: 'example-react-docs-ui-as-tree',
+      source: 'React',
+      title: 'Described as a tree of components',
       observation:
-        'Primitive libraries expose composable parts — Root, Trigger, Content — rather than a single component with a prop for every arrangement.',
+        'The React documentation presents an interface as a tree of components, each rendering from its inputs.',
       takeaway:
-        'The library never has to anticipate layouts, because the consumer expresses them directly.',
+        'The mental model is the same one you used in Module 1 lesson 5: page, sections, repeated parts, controls.',
     },
     {
-      id: 'example-design-system-parity',
-      source: 'Mature design systems',
-      title: 'One vocabulary across both tools',
+      id: 'example-figma-canvas-react',
+      source: 'Figma',
+      title: 'Products built this way at scale',
       observation:
-        'Systems that hold up over time use the same component names and part names in the design file and the codebase.',
+        'Figma, Linear, GitHub and Vercel all build their interfaces from component-based frameworks.',
       takeaway:
-        'Shared vocabulary removes a translation step from every single conversation about the product.',
+        'Not a fashion. At the scale these products operate, hand-wiring every connection stops being possible.',
     },
   ],
-
   practicalWalkthrough: [
     {
       kind: 'paragraph',
-      text: 'Breaking an interface into components.',
+      text: 'Take the Module 4 disclosure and compare the two versions honestly.',
     },
-    { kind: 'heading', text: '1. Build it as one component first' },
     {
       kind: 'paragraph',
-      text: 'Boundaries are easier to see in working code than to predict. Extracting later is cheap; unwinding a wrong abstraction is not.',
+      text: 'By hand, adding one requirement — the panel also shows a count — means finding every place the panel is updated and adding the count there too. Miss one and the count is stale in that path only, which is the bug that only happens sometimes.',
     },
-    { kind: 'heading', text: '2. Mark what changes for different reasons' },
+    {
+      kind: 'code',
+      language: 'tsx',
+      code: 'function Disclosure({ isOpen, items }: { isOpen: boolean; items: string[] }) {\n  return (\n    <>\n      <button aria-expanded={isOpen}>\n        {isOpen ? "Hide" : "Show"} details ({items.length})\n      </button>\n\n      {isOpen && (\n        <ul>\n          {items.map((item) => (\n            <li key={item}>{item}</li>\n          ))}\n        </ul>\n      )}\n    </>\n  );\n}',
+    },
     {
       kind: 'paragraph',
-      text: 'The filter bar changes when filtering changes. The row changes when the data shape changes. Different reasons, different components.',
+      text: 'In React, the count appears in one place and is correct everywhere, because there is only one description of the button. `items.length` is the derived value from Module 5 lesson 23 — not stored, asked.',
     },
-    { kind: 'heading', text: '3. Name each candidate' },
     {
       kind: 'paragraph',
-      text: 'If the honest name is "the middle bit", it is not a component yet.',
-    },
-    { kind: 'heading', text: '4. Extract, and check the props' },
-    {
-      kind: 'paragraph',
-      text: 'A long prop list immediately after extraction usually means the boundary cut through a responsibility rather than between two.',
-    },
-    { kind: 'heading', text: '5. Leave the coincidences alone' },
-    {
-      kind: 'paragraph',
-      text: 'Two similar-looking sections with different purposes stay separate until a third appears and the shared concept is real.',
+      text: '`items.map(...)` is the array method from JavaScript, producing one `<li>` per item. The `key` is explained properly in lesson 33.',
     },
   ],
-
   commonMistakes: [
     {
-      id: 'mistake-extract-by-appearance',
-      mistake: 'Extracting a component because two things look alike.',
-      why: 'Appearance is a weak signal. They will diverge, and the shared component will accumulate conditionals for each divergence.',
-      instead: 'Extract when the responsibility is shared, not when the pixels are.',
+      id: 'mistake-07-01-manual-dom-in-react',
+      mistake: 'Reaching for `document.querySelector` inside a React component.',
+      why: 'Two things are now changing the page and they will disagree. React will overwrite the manual change on the next render.',
+      instead:
+        'Change the state and let the component describe the result. If you are querying the DOM, you are still writing Module 4 code.',
     },
     {
-      id: 'mistake-too-granular',
-      mistake: 'Splitting everything into tiny components.',
-      why: 'Following a simple interface across fifteen files is harder than reading one file, and each boundary is an API to maintain.',
-      instead: 'Split when there is a reason to change independently.',
-    },
-    {
-      id: 'mistake-god-component',
-      mistake: 'One component that renders an entire page.',
-      why: 'Nothing can be tested, reused, or understood in isolation, and every change risks everything on the screen.',
-      instead: 'Split along responsibilities as they become visible.',
-    },
-    {
-      id: 'mistake-config-over-composition',
-      mistake: 'Adding a prop instead of allowing children.',
-      why: 'Each new arrangement needs a new prop, and the component slowly acquires knowledge of every context it appears in.',
-      instead: 'Accept children or slots and let the consumer express structure.',
+      id: 'mistake-07-01-framework-as-default',
+      mistake: 'Assuming every interface needs React.',
+      why: 'A static page with one disclosure does not benefit, and gains a build step and a download.',
+      instead:
+        'React earns its place when the number of state-to-screen connections is large. For a page with three, plain JavaScript is lighter and clearer.',
     },
   ],
-
-  eliteConsiderations: [
+  professionalConsideration: [
     {
-      kind: 'list',
-      items: [
-        'Write the usage you want before writing the component; the call site reveals the right API faster than the implementation does.',
-        'Keep components that fetch data separate from components that render it — the reasons to change are different.',
-        'Name by role in the product, not by position on screen.',
-        'When a component gains its fourth boolean prop, look for the second responsibility hiding inside it.',
-      ],
+      kind: 'paragraph',
+      text: 'The declarative shift is why React is often said to be easy to learn and hard to master.',
+    },
+    {
+      kind: 'paragraph',
+      text: 'The syntax takes an afternoon. The difficulty is giving up the instinct to reach in and change something, and instead asking "what state would produce the screen I want?" That reframing is the whole skill, and the Module 5 habit of listing facts is the best possible preparation for it.',
     },
   ],
-
   practicalExercise: {
-    id: 'exercise-07-01',
-    title: 'Break an interface into sensible components',
+    id: 'exercise-why-react-exists',
+    title: 'Compare one interaction in both approaches',
     prompt:
-      'Take an existing single-file interface and decompose it along responsibilities.',
+      'Take one interaction you built by hand in Module 4 and rebuild it in React, then compare the two directly.',
     steps: [
-      'Start from a working interface written as one component.',
-      'Annotate each region with the reason it would change.',
-      'Group regions that share a reason; those are candidate components.',
-      'Name each candidate; discard any you cannot name meaningfully.',
-      'Extract them and review the resulting prop lists.',
-      'Revisit any boundary that produced more than about five props.',
-      'Identify at least one repeated pattern you deliberately did not extract, and write down why.',
+      'Pick an interaction with at least two things that change together.',
+      'Count the places your Module 4 version updates the page.',
+      'Rebuild it as a React component.',
+      'Count the places the React version describes the result.',
+      'Add one new requirement to both — a count, an extra label, a disabled condition.',
+      'Record how many lines each change touched.',
+      'Write a paragraph on what the difference means as an interface grows.',
     ],
     successCriteria: [
-      'Every component has a name describing its role, not its position.',
-      'Each boundary separates a distinct reason to change.',
-      'No component has an unexplained prop list longer than about five.',
-      'At least one deliberate non-extraction is documented.',
-      'The interface behaves identically to before the refactor.',
+      'Both versions exist and work.',
+      'Update sites counted in both.',
+      'The same new requirement added to both, with lines touched recorded.',
+      'A written comparison that addresses growth rather than only line count.',
     ],
-    estimatedMinutes: 45,
-    hint: 'Ask what would make each region change. Regions with different answers belong to different components.',
+    estimatedMinutes: 55,
+    hint: 'Pick something with at least three dependent pieces. With one, the hand-written version looks perfectly reasonable — which is honest, and not the case this lesson is about.',
   },
-
-  reflectionQuestion: 'Should every repeated visual pattern become a component?',
-  reflectionHint: 'Reuse is not the only reason for a boundary.',
-
+  reflectionQuestion:
+    'What kind of interface bug does the declarative approach make structurally unlikely?',
+  reflectionHint:
+    'Think about what has to be remembered in each approach, and what happens when it is not.',
   resources: [
     {
-      id: 'resource-react-your-first-component',
-      title: 'React: your first component',
-      url: 'https://react.dev/learn/your-first-component',
+      id: 'resource-react-quick-start',
+      title: 'Quick Start — React',
+      url: 'https://react.dev/learn',
       type: 'documentation',
-      estimatedMinutes: 20,
-      note: 'The component model, stated plainly.',
+      author: 'React',
+      estimatedMinutes: 60,
+      note: 'The official introduction. Genuinely good, and written for people who know JavaScript.',
     },
     {
       id: 'resource-react-thinking-in-react',
       title: 'Thinking in React',
       url: 'https://react.dev/learn/thinking-in-react',
       type: 'documentation',
+      author: 'React',
       estimatedMinutes: 30,
-      note: 'Decomposition worked through on a real example.',
+      note: 'How to go from a design to a component tree. Essentially Module 1 lesson 5 in React terms.',
     },
   ],
-
-  competencyTags: ['react', 'component-architecture', 'architecture'],
-
+  competencyTags: ['react', 'javascript', 'component-architecture'],
   completionCriteria: [
-    'Has decomposed a real interface along responsibilities.',
-    'Every component has a meaningful name.',
-    'At least one deliberate non-extraction is documented.',
+    'Can explain why manual DOM updating fails as an interface grows.',
+    'Can read a component and say what it renders for given inputs.',
+    'Can state what "the interface is a function of the data" means.',
   ],
 };
 
@@ -272,273 +293,272 @@ const LESSON_31: Lesson = {
 /* Lesson 32                                                                   */
 /* -------------------------------------------------------------------------- */
 
-const LESSON_32: Lesson = {
-  id: 'lesson-07-02',
-  slug: 'props',
+const LESSON_2: Lesson = {
+  id: 'lesson-components-and-props',
+  slug: 'components-and-props',
   moduleId: MODULE_ID,
   lessonNumber: 2,
-  title: 'Props',
+  title: 'Components and Props',
   summary:
-    'Props are a component\'s public API. They are read far more often than they are written, and designing them is design work.',
+    'A component is a reusable piece of interface; props are what you pass into it. This is the Figma component model, in code.',
   estimatedMinutes: 9,
-
   objectives: [
-    'Treat props as an interface others must understand without reading the source.',
-    'Use children and slots instead of configuration where structure varies.',
-    'Name props so their meaning is obvious at the call site.',
-    'Recognise a prop list that signals more than one responsibility.',
+    'Write a component that takes typed props.',
+    'Use children to pass content rather than configuration.',
+    'Decide what should be a prop and what should not.',
+    'Map a Figma component and its properties onto a React component.',
   ],
-
-  prerequisiteConcepts: ['Components', 'Literal union types'],
-  prerequisiteLessonIds: ['lesson-07-01', 'lesson-06-02'],
-
+  prerequisiteConcepts: [
+    'Components intuition from Module 1 lesson 5',
+    'Types from Module 6',
+    'JSX from the previous lesson',
+  ],
+  prerequisiteLessonIds: [
+    'lesson-why-react-exists',
+    'lesson-breaking-an-interface-into-parts',
+  ],
   recap: [
     {
       kind: 'paragraph',
-      text: 'You can draw a boundary. Props are what crosses it, which makes them the part everyone else has to live with.',
+      text: 'Last lesson you saw a component as a function that returns markup. This lesson is about its inputs.',
     },
   ],
-
+  priorKnowledge: [
+    {
+      kind: 'paragraph',
+      text: 'In Module 1 lesson 5 you decided which parts of an interface deserve a name, and concluded that behaviour is a better boundary than appearance. In Figma you build components with properties — text, boolean, variant.',
+    },
+    {
+      kind: 'paragraph',
+      text: 'Props are those properties. The notation is different; the model is identical.',
+    },
+  ],
   coreConcept: [
     {
       kind: 'paragraph',
-      text: 'Props are inputs, and they come in a few distinct kinds worth keeping separate: data to display, configuration of appearance or behaviour, callbacks reporting what happened, and content passed as children.',
+      text: 'A component takes an object of values and returns markup. Those values are **props**.',
     },
-    {
-      kind: 'list',
-      items: [
-        'Data — what the component shows.',
-        'Configuration — variant, size, tone; a closed set, not an open string.',
-        'Callbacks — named for the event, `onSelect`, not for the reaction, `doSearch`.',
-        'Children and slots — structure the component should not need to anticipate.',
-      ],
-    },
-    {
-      kind: 'paragraph',
-      text: 'The test of a prop API is the call site. Read it aloud without looking at the implementation: if you cannot predict what the component will do, the API is wrong regardless of how clean the implementation is.',
-    },
-    {
-      kind: 'callout',
-      tone: 'insight',
-      body: 'Props are read at every call site and written once. Optimise for reading.',
-    },
-  ],
-
-  firstPrinciples: [
-    {
-      kind: 'paragraph',
-      text: 'Each boolean prop doubles the number of possible configurations. Four booleans is sixteen combinations, most of which nobody has designed, tested, or even considered — and all of which are reachable.',
-    },
-    {
-      kind: 'paragraph',
-      text: 'A closed union collapses that space. `variant: \'primary\' | \'secondary\' | \'danger\'` is three states rather than eight, and it makes the mutually exclusive cases actually exclusive.',
-    },
-  ],
-
-  designPerspective: [
-    {
-      kind: 'paragraph',
-      text: 'Props and Figma component properties describe the same thing, and where they disagree someone is going to build the wrong variant. Deciding them together is cheaper than reconciling them afterwards.',
-    },
-    {
-      kind: 'paragraph',
-      text: 'It is also where a design system reveals whether it has decided anything. Six variants of a card usually means six screens each invented their own, and the props are simply the record of that.',
-    },
-  ],
-
-  engineeringPerspective: [
     {
       kind: 'code',
       language: 'tsx',
-      caption: 'A prop API you can read at the call site.',
-      code: `interface CardProps {
-  /** Displayed as the card's heading. */
-  title: string;
-  /** Optional supporting text. Omit for a title-only card. */
-  description?: string;
-  /** Visual weight. Mutually exclusive by construction. */
-  emphasis?: 'default' | 'raised' | 'quiet';
-  /** Fired when the whole card is activated. Omit to make it non-interactive. */
-  onActivate?: () => void;
-  /** Arbitrary content in the card's action area. */
-  actions?: React.ReactNode;
-}
-
-// The call site says what it does without opening the file.
-<Card
-  title="Command palette"
-  description="Search and run any command."
-  emphasis="raised"
-  actions={<Button variant="quiet">Open</Button>}
-/>`,
+      code: 'type BadgeProps = {\n  label: string;\n  tone: "neutral" | "success" | "warning" | "danger";\n};\n\nfunction Badge({ label, tone }: BadgeProps) {\n  return <span className={`badge badge-${tone}`}>{label}</span>;\n}',
     },
     {
       kind: 'paragraph',
-      text: 'Note that interactivity is implied by the presence of `onActivate` rather than by a separate `isInteractive` flag. A prop that only exists to describe another prop is usually one prop too many.',
+      text: 'Line by line. `BadgeProps` is a type from Module 6 — and `tone` is a union, so only those four values are possible. A fifth tone is a compile error, not a broken badge.',
+    },
+    {
+      kind: 'paragraph',
+      text: '`{ label, tone }` pulls the two values out of the props object. `className` is JSX’s name for the HTML `class` attribute, because `class` is a reserved word in JavaScript.',
+    },
+    {
+      kind: 'paragraph',
+      text: 'Used like an HTML element: `<Badge label="Draft" tone="neutral" />`.',
     },
   ],
-
+  whyDesignersCare: [
+    {
+      kind: 'paragraph',
+      text: 'Because the props are the component’s public interface, and designing it is design work.',
+    },
+    {
+      kind: 'paragraph',
+      text: 'A Badge with a `tone` union can only be one of four designed things. A Badge with `color` and `backgroundColor` as free strings can be anything, which means the design system is advisory rather than real.',
+    },
+    {
+      kind: 'paragraph',
+      text: 'Which of those you build is a decision about how much the component is allowed to be misused — and that is a design decision expressed in a type.',
+    },
+  ],
+  howItWorks: [
+    {
+      kind: 'paragraph',
+      text: 'The second mechanism is **children**: content passed between the tags rather than as a named value.',
+    },
+    {
+      kind: 'code',
+      language: 'tsx',
+      code: 'type CardProps = {\n  title: string;\n  children: React.ReactNode;\n};\n\nfunction Card({ title, children }: CardProps) {\n  return (\n    <section className="card">\n      <h3>{title}</h3>\n      {children}\n    </section>\n  );\n}',
+    },
+    {
+      kind: 'code',
+      language: 'tsx',
+      code: '<Card title="Profile">\n  <p>Manage how you appear to other people.</p>\n  <Button>Edit</Button>\n</Card>',
+    },
+    {
+      kind: 'paragraph',
+      text: '`React.ReactNode` is the type for "anything renderable". Everything between the tags arrives as `children` and is rendered where the component places it.',
+    },
+    {
+      kind: 'paragraph',
+      text: 'This is the difference between a component that configures its contents and one that holds whatever you put in it. The second is far more flexible, and lesson 39 builds on it.',
+    },
+  ],
+  firstPrinciples: [
+    {
+      kind: 'paragraph',
+      text: 'Props flow one way: from parent to child. A child cannot change what it was given.',
+    },
+    {
+      kind: 'paragraph',
+      text: 'That restriction is what makes a component predictable. Given the same props, the same output — so when something is wrong, the cause is in the props or in the component, and nowhere else.',
+    },
+    {
+      kind: 'paragraph',
+      text: 'When a child needs to cause a change, the parent passes down a function for it to call. That is covered in lesson 34, and it is how one-way flow and interactivity coexist.',
+    },
+  ],
+  designPerspective: [
+    {
+      kind: 'paragraph',
+      text: 'The design question is what varies between uses and what does not.',
+    },
+    {
+      kind: 'paragraph',
+      text: 'The label of a badge varies — it is a prop. The 6px radius does not — it belongs in the component. Every prop is a promise to support that variation forever, so a prop added casually is a maintenance commitment made casually.',
+    },
+  ],
+  engineeringPerspective: [
+    {
+      kind: 'paragraph',
+      text: 'The engineering question is how narrow the types can be.',
+    },
+    {
+      kind: 'paragraph',
+      text: 'A union beats a string. A required prop beats an optional one with a default nobody intended. The narrower the type, the more misuse is caught as it is written rather than discovered in review — which is the Module 6 argument applied to components.',
+    },
+  ],
   connectionBetweenBoth: [
     {
       kind: 'paragraph',
-      text: 'Designing the API before implementing forces the design questions early: is this one component or two, what varies, what is fixed, what does the consumer control.',
+      text: 'A Figma component with a variant property and a React component with a union prop are the same object described twice.',
     },
     {
       kind: 'paragraph',
-      text: 'Those are the same questions a designer answers when defining a component in a design file, which is why doing them once, together, is strictly cheaper than doing them twice.',
+      text: 'When the names match — same component name, same property names, same allowed values — handoff becomes checking rather than translating. Module 10 makes this parity a deliberate practice.',
     },
   ],
-
   industryExamples: [
     {
-      id: 'example-variant-not-booleans',
-      source: 'Established component libraries',
-      title: 'Variants as a closed set',
+      id: 'example-polaris-props',
+      source: 'Shopify',
+      title: 'Props documented as the component contract',
       observation:
-        'Mature libraries expose `variant` and `size` as unions rather than `isPrimary`, `isLarge`, `isDanger` booleans.',
+        'Polaris documents every prop with its type and allowed values alongside the visual examples.',
       takeaway:
-        'Mutually exclusive things should be mutually exclusive in the type, not by convention.',
+        'The prop table is the real specification. The screenshots show what it produces.',
     },
     {
-      id: 'example-slots-api',
-      source: 'Design-system components with slots',
-      title: 'Slots for what cannot be anticipated',
+      id: 'example-figma-variant-parity',
+      source: 'Figma',
+      title: 'Variants as a closed set',
       observation:
-        'Components commonly accept `leading`, `trailing`, or `actions` nodes rather than props for every possible ornament.',
+        'A Figma variant property offers a fixed list of values rather than free input.',
       takeaway:
-        'The component stops needing to know about contexts it has never seen.',
+        'Exactly the constraint a union gives in code. The two tools agree about what a component should allow.',
     },
   ],
-
   practicalWalkthrough: [
     {
       kind: 'paragraph',
-      text: 'Designing a configurable card.',
+      text: 'Build a reusable card from a design.',
     },
-    { kind: 'heading', text: '1. Write the call sites first' },
+    {
+      kind: 'code',
+      language: 'tsx',
+      code: 'type ProductCardProps = {\n  name: string;\n  price: number;\n  currency: string;\n  imageUrl?: string;\n  inStock: boolean;\n};\n\nfunction ProductCard({ name, price, currency, imageUrl, inStock }: ProductCardProps) {\n  return (\n    <article className="product-card">\n      <img src={imageUrl ?? "/images/placeholder.png"} alt="" />\n      <h3>{name}</h3>\n      <p>{formatPrice(price, currency)}</p>\n      {inStock === false && <Badge label="Out of stock" tone="warning" />}\n    </article>\n  );\n}',
+    },
     {
       kind: 'paragraph',
-      text: 'Four or five realistic usages, before any implementation. This is the API design; the rest is execution.',
+      text: 'This is the `Product` type from Module 6, used as props. The optional `imageUrl` still forces the placeholder decision, exactly as it did there.',
     },
-    { kind: 'heading', text: '2. Find what actually varies' },
     {
       kind: 'paragraph',
-      text: 'Anything identical across all the call sites is not a prop. Anything varying is a candidate.',
+      text: '`alt=""` on the image is deliberate: the product name is already the heading beside it, so announcing the image as well would repeat. An empty alt marks it as decorative — a decision Module 9 returns to.',
     },
-    { kind: 'heading', text: '3. Collapse booleans into unions' },
     {
       kind: 'paragraph',
-      text: 'Wherever two flags cannot both be true, they are one prop with two values.',
-    },
-    { kind: 'heading', text: '4. Replace configuration with slots' },
-    {
-      kind: 'paragraph',
-      text: 'Anything structural — actions, media, badges — becomes a node the consumer supplies.',
-    },
-    { kind: 'heading', text: '5. Document each prop in one line' },
-    {
-      kind: 'paragraph',
-      text: 'If a prop needs a paragraph to explain, it is doing more than one thing.',
-    },
-    { kind: 'heading', text: '6. Test the API on someone else' },
-    {
-      kind: 'paragraph',
-      text: 'Show only the type and the call sites. If they can predict the rendering, the API is readable.',
+      text: 'And `Badge` is used inside `ProductCard`. Components compose, which is how a page is built from a handful of small pieces rather than one large one.',
     },
   ],
-
   commonMistakes: [
     {
-      id: 'mistake-boolean-explosion-props',
-      mistake: 'Adding a boolean prop for every new case.',
-      why: 'The combination space doubles each time, and most combinations are never designed or tested.',
-      instead: 'Use a union for mutually exclusive options.',
+      id: 'mistake-07-02-too-many-props',
+      mistake: 'Adding a prop for every variation that comes up.',
+      why: 'The component becomes a configuration file, and the props start contradicting each other.',
+      instead:
+        'When props accumulate, the boundary is usually wrong. Lesson 38 covers this directly.',
     },
     {
-      id: 'mistake-prop-drilling',
-      mistake: 'Threading a prop through several layers that do not use it.',
-      why: 'Every intermediate component becomes coupled to data it has no interest in.',
-      instead: 'Pass the rendered node down as children, or use context for genuinely ambient values.',
-    },
-    {
-      id: 'mistake-callback-naming',
-      mistake: 'Naming a callback after what the parent will do.',
-      why: '`onSave` presumes the reaction; the component only knows that something was submitted.',
-      instead: 'Name callbacks after the event: `onSubmit`, `onSelect`, `onDismiss`.',
-    },
-    {
-      id: 'mistake-leaking-implementation',
-      mistake: 'Exposing props that describe the implementation.',
-      why: '`wrapperClassName` and `innerStyle` freeze the internal structure into the public API.',
-      instead: 'Expose intent — variant, tone, density — and keep structure private.',
+      id: 'mistake-07-02-string-instead-of-union',
+      mistake: 'Typing a constrained prop as `string`.',
+      why: 'Any value is then accepted, including typos, and the design system constraint exists only in documentation.',
+      instead: 'Use a union of the allowed values. The editor then offers them and refuses the rest.',
     },
   ],
-
-  eliteConsiderations: [
+  professionalConsideration: [
     {
-      kind: 'list',
-      items: [
-        'Design the API against the hardest call site you can imagine, not the easiest.',
-        'Prefer required props over optional ones with defaults that hide a decision.',
-        'Keep prop names consistent across the whole library; `variant` should never be `kind` elsewhere.',
-        'A prop that only makes sense when another prop has a specific value belongs in the type, expressed as a union of allowed shapes.',
-      ],
+      kind: 'paragraph',
+      text: 'A useful test for whether something should be a prop: would two uses on the same screen reasonably differ?',
+    },
+    {
+      kind: 'paragraph',
+      text: 'Two badges with different labels, certainly. Two badges with different corner radii, almost never — and if they do, that is a design inconsistency being encoded rather than a variation being supported. Props make inconsistency easy, which is why each one deserves a moment of resistance.',
     },
   ],
-
   practicalExercise: {
-    id: 'exercise-07-02',
-    title: 'Create a configurable card component',
+    id: 'exercise-components-and-props',
+    title: 'Build reusable cards',
     prompt:
-      'Design and build a card whose API can be understood entirely from its call sites.',
+      'Take a card you designed in Figma and build it as a React component with typed props, then use it several times with different data.',
     steps: [
-      'Write five realistic call sites before any implementation.',
-      'Derive the prop list from what varies across them.',
-      'Collapse every set of mutually exclusive booleans into a union.',
-      'Use slots for anything structural the card should not anticipate.',
-      'Document each prop in a single line.',
-      'Implement the component against the call sites you wrote.',
-      'Show the type and call sites to someone and check they can predict the result.',
+      'List the Figma component’s properties.',
+      'Write the props type, using unions for anything with a fixed set of values.',
+      'Build the component.',
+      'Render at least four instances with genuinely different data.',
+      'Include one awkward case: a long name, a missing image, an unusual value.',
+      'Identify one thing you were tempted to make a prop and decided against, and say why.',
+      'Use `children` for at least one part rather than a named prop.',
     ],
     successCriteria: [
-      'No two boolean props are mutually exclusive.',
-      'Every prop has a one-line description.',
-      'Structural content is supplied as slots, not configured.',
-      'Callbacks are named after events, not reactions.',
-      'No prop exposes internal structure such as class names for inner elements.',
+      'Props are typed, with unions for constrained values.',
+      'Four or more instances with different data.',
+      'At least one awkward case renders correctly.',
+      'One rejected prop is documented with reasoning.',
+      '`children` is used where content rather than configuration is being passed.',
     ],
-    estimatedMinutes: 45,
-    hint: 'Write the usage you wish existed, then make it real. Designing from the implementation outwards produces APIs that fit the implementation rather than the user.',
+    estimatedMinutes: 60,
+    hint: 'Start from the Figma properties panel. If a property is a variant there, it is a union here — the mapping is usually that direct.',
   },
-
-  reflectionQuestion: 'When does a component have too many props?',
-  reflectionHint: 'A confused API often signals multiple responsibilities.',
-
+  reflectionQuestion:
+    'Why is a union type a better prop than a string, even though both work?',
+  reflectionHint:
+    'Think about what each one allows a future developer — including you — to pass in without anybody noticing.',
   resources: [
     {
       id: 'resource-react-passing-props',
-      title: 'React: passing props to a component',
+      title: 'Passing Props to a Component',
       url: 'https://react.dev/learn/passing-props-to-a-component',
       type: 'documentation',
+      author: 'React',
       estimatedMinutes: 25,
-      note: 'Props, children, and the mechanics of both.',
+      note: 'Props, children, and defaults, with interactive examples.',
     },
     {
-      id: 'resource-react-children',
-      title: 'React: passing JSX as children',
-      url: 'https://react.dev/learn/passing-props-to-a-component#passing-jsx-as-children',
+      id: 'resource-react-your-first-component',
+      title: 'Your First Component',
+      url: 'https://react.dev/learn/your-first-component',
       type: 'documentation',
-      estimatedMinutes: 10,
-      note: 'The mechanism behind slot-style APIs.',
+      author: 'React',
+      estimatedMinutes: 20,
+      note: 'Defining and composing components. Short, and the right place to start.',
     },
   ],
-
-  competencyTags: ['typescript', 'react', 'component-api-design'],
-
+  competencyTags: ['react', 'component-api-design', 'typescript', 'design-systems'],
   completionCriteria: [
-    'Has designed a prop API from call sites rather than implementation.',
-    'No mutually exclusive booleans remain.',
-    'Every prop is documented in one line.',
+    'Can write a component with typed props.',
+    'Uses unions for constrained values rather than strings.',
+    'Can explain when to use children instead of a prop.',
   ],
 };
 
@@ -546,263 +566,260 @@ const LESSON_32: Lesson = {
 /* Lesson 33                                                                   */
 /* -------------------------------------------------------------------------- */
 
-const LESSON_33: Lesson = {
-  id: 'lesson-07-03',
-  slug: 'rendering',
+const LESSON_3: Lesson = {
+  id: 'lesson-rendering-lists-and-conditional-ui',
+  slug: 'rendering-lists-and-conditional-ui',
   moduleId: MODULE_ID,
   lessonNumber: 3,
-  title: 'Rendering',
+  title: 'Rendering Lists and Conditional UI',
   summary:
-    'Rendering describes what should exist for the current state. Keys are how React decides whether two descriptions refer to the same thing.',
+    'Turning an array into interface, and choosing between variations — the JavaScript you already know, applied inside JSX.',
   estimatedMinutes: 9,
-
   objectives: [
-    'Describe render, commit, and what triggers each.',
-    'Render conditionally without producing accidental output.',
-    'Render lists with keys that express identity.',
-    'Predict what a wrong key will break.',
+    'Render a list from an array.',
+    'Explain what a key is for and choose a correct one.',
+    'Render different output for different conditions.',
+    'Handle the empty case as a designed state rather than an absence.',
   ],
-
-  prerequisiteConcepts: ['Props', 'Keyed reconciliation'],
-  prerequisiteLessonIds: ['lesson-07-02', 'lesson-05-04'],
-
+  prerequisiteConcepts: [
+    'Arrays and conditions from Module 4',
+    'Empty states from Module 4 lesson 18',
+    'Components and props',
+  ],
+  prerequisiteLessonIds: [
+    'lesson-components-and-props',
+    'lesson-conditions-and-interface-decisions',
+  ],
   recap: [
     {
       kind: 'paragraph',
-      text: 'You implemented keyed reconciliation by hand in Module 5. This is the same mechanism with the bookkeeping removed.',
+      text: 'You can write a component that takes typed props. Most real interfaces render many of them from data, which is this lesson.',
     },
   ],
-
+  priorKnowledge: [
+    {
+      kind: 'paragraph',
+      text: 'In Module 4 lesson 18 you wrote a function distinguishing "no results match your filters" from "nothing here yet". That distinction returns here as two different pieces of interface.',
+    },
+  ],
   coreConcept: [
     {
       kind: 'paragraph',
-      text: 'Rendering is React calling your components to get a description of the interface for the current state. Committing is React applying the differences to the DOM. Render is frequent and should be pure; commit is where the visible change happens.',
+      text: 'A list is an array turned into elements with `map`.',
     },
-    {
-      kind: 'paragraph',
-      text: 'Because render is called repeatedly, a component must be a pure function of its props and state. Mutating something outside, or reading something that changes between calls, produces results that depend on how often React happened to render — which is not a contract you can rely on.',
-    },
-    {
-      kind: 'callout',
-      tone: 'warning',
-      body: 'A key is an identity claim, not a loop counter. It tells React "this is the same item as before", and React acts on that claim — preserving state and focus, or discarding them.',
-    },
-  ],
-
-  firstPrinciples: [
-    {
-      kind: 'paragraph',
-      text: 'With an index as key, position becomes identity. Remove the first item of a list and every remaining item shifts by one, so React concludes each one became a different item — component state stays with the position rather than the data.',
-    },
-    {
-      kind: 'paragraph',
-      text: 'The visible result is text typed into one row appearing in another, a checked box moving, or focus landing on the wrong element. Nothing in the code looks wrong; the identity claim was simply false.',
-    },
-  ],
-
-  designPerspective: [
-    {
-      kind: 'paragraph',
-      text: 'Conditional rendering is where empty states either exist or do not. `{items.length > 0 && <List …/>}` renders nothing when there are no items — a blank region, which is a design decision nobody made.',
-    },
-    {
-      kind: 'paragraph',
-      text: 'Writing the else branch every time turns "what does this look like with no data?" into a question the code forces you to answer.',
-    },
-  ],
-
-  engineeringPerspective: [
     {
       kind: 'code',
       language: 'tsx',
-      caption: 'Identity, and the empty case handled rather than omitted.',
-      code: `// Index as key: state follows position, not data.
-{projects.map((project, i) => <Row key={i} project={project} />)}
-
-// Stable id: state follows the item through sorting and removal.
-{projects.map((project) => <Row key={project.id} project={project} />)}
-
-// && renders nothing when the list is empty — a blank region nobody designed.
-{projects.length > 0 && <ProjectList projects={projects} />}
-
-// The empty case is a state with its own design.
-{projects.length > 0
-  ? <ProjectList projects={projects} />
-  : <EmptyState
-      title="No projects yet"
-      action={<Button onClick={create}>New project</Button>}
-    />}`,
+      code: 'function ProductList({ products }: { products: Product[] }) {\n  return (\n    <ul>\n      {products.map((product) => (\n        <ProductCard key={product.id} {...product} />\n      ))}\n    </ul>\n  );\n}',
     },
     {
       kind: 'paragraph',
-      text: 'One more trap: `{count && <Badge …/>}` renders the number zero when count is zero, because zero is falsy but still renders. Compare explicitly — `count > 0 &&` — or use a ternary.',
+      text: '`products.map(...)` produces one element per item — the same array method from Module 4, now returning markup instead of values.',
+    },
+    {
+      kind: 'paragraph',
+      text: '`{...product}` spreads the object’s fields as individual props, so a product with `name` and `price` passes both. Convenient, and worth using carefully: it passes everything, including fields the component does not expect.',
     },
   ],
-
+  whyDesignersCare: [
+    {
+      kind: 'paragraph',
+      text: 'Because this is where designs meet real data, and real data is never the length the design showed.',
+    },
+    {
+      kind: 'paragraph',
+      text: 'Zero items. One item. Four hundred. A name that is forty characters. The design showed six tidy cards; the list has to work for all of it, and those cases are decided here.',
+    },
+  ],
+  howItWorks: [
+    {
+      kind: 'paragraph',
+      text: 'Every item in a list needs a **key** — a value that identifies it across renders.',
+    },
+    {
+      kind: 'paragraph',
+      text: 'React uses it to tell which item is which when the list changes. Without it, React compares by position, which goes wrong the moment items are inserted, removed or reordered.',
+    },
+    {
+      kind: 'code',
+      language: 'tsx',
+      code: '// Good: a stable id that belongs to the item.\n{products.map((p) => <ProductCard key={p.id} {...p} />)}\n\n// Bad: position, which changes when the list does.\n{products.map((p, index) => <ProductCard key={index} {...p} />)}',
+    },
+    {
+      kind: 'paragraph',
+      text: 'The failure with index keys is specific and nasty: delete the first item and every subsequent item shifts up a position, so React believes each one *became* its neighbour. Any state inside them — a focused field, a half-typed value, an open menu — stays attached to the wrong row.',
+    },
+    {
+      kind: 'callout',
+      tone: 'pitfall',
+      body: 'Index keys are safe only for a list that never reorders, never filters and never has items inserted or removed. If any of those are possible, use a real id.',
+    },
+  ],
+  firstPrinciples: [
+    {
+      kind: 'paragraph',
+      text: 'Conditional rendering is the Module 4 conditions, written inside JSX.',
+    },
+    {
+      kind: 'code',
+      language: 'tsx',
+      code: '{isLoading && <Spinner />}\n\n{error !== null ? <ErrorMessage text={error} /> : <ProductList products={products} />}',
+    },
+    {
+      kind: 'paragraph',
+      text: '`&&` renders the right side when the left is true. `? :` chooses between two. Nothing new — the same two tools from Module 4 lesson 18.',
+    },
+    {
+      kind: 'paragraph',
+      text: 'One trap worth knowing: `{items.length && <List />}` renders the number `0` when the array is empty, because `0` is falsy but still a renderable value. Write `{items.length > 0 && <List />}` and the problem disappears.',
+    },
+  ],
+  designPerspective: [
+    {
+      kind: 'paragraph',
+      text: 'The design question is the one from Module 4: which kind of empty is this?',
+    },
+    {
+      kind: 'paragraph',
+      text: 'Nothing exists yet invites creating something. Nothing matched the filter invites clearing it. They are different screens, and rendering the same component for both is the most common version of getting this wrong.',
+    },
+  ],
+  engineeringPerspective: [
+    {
+      kind: 'paragraph',
+      text: 'The engineering question is where the branching lives.',
+    },
+    {
+      kind: 'paragraph',
+      text: 'Deeply nested ternaries inside JSX become unreadable fast. The usual remedy is to decide early and return — the same early-exit shape you used for validation in Module 4 — so each case is a short, separate block rather than one tangled expression.',
+    },
+  ],
   connectionBetweenBoth: [
     {
       kind: 'paragraph',
-      text: 'Declarative rendering makes the set of visual states enumerable: the states are the branches. A design review can walk those branches, and a missing branch is a missing design.',
+      text: 'The discriminated union from Module 6 makes this tidy.',
     },
     {
       kind: 'paragraph',
-      text: 'This is the clearest payoff of the union types from Module 6 — a switch over a five-member union is a list of five screens that must exist.',
+      text: 'With `request.status` as a union, the rendering becomes one branch per designed state — and the type system insists every one is handled. The design enumeration, the type, and the rendering end up as three views of one list.',
     },
   ],
-
   industryExamples: [
     {
-      id: 'example-key-bugs',
-      source: 'React issue trackers and post-mortems',
-      title: 'Index keys as a recurring defect class',
+      id: 'example-react-keys-docs',
+      source: 'React',
+      title: 'Keys documented as identity',
       observation:
-        'Bugs where input values or checked states attach to the wrong row after sorting or deletion trace back to index keys with striking regularity.',
+        'React’s documentation frames keys as telling React which item is which, not as a uniqueness requirement.',
       takeaway:
-        'It is not a style rule. It is an identity claim that is false as soon as the list reorders.',
+        'The framing matters. A key is identity across time, which is why a position cannot serve as one.',
     },
     {
-      id: 'example-empty-states-designed',
-      source: 'Products with strong empty states',
-      title: 'The empty case treated as a screen',
+      id: 'example-linear-list-states',
+      source: 'Linear',
+      title: 'Distinct empty states',
       observation:
-        'Well-designed products treat "no data yet" as an opportunity to explain and offer the first action, rather than rendering nothing.',
+        'Linear distinguishes a view with no issues from a filter that matched nothing, with different wording and different actions.',
       takeaway:
-        'The empty state is frequently a new user\'s first screen, which makes it the least appropriate place for a blank region.',
+        'The distinction is visible in the product because it was made in the code. Collapsing it would be invisible to the developer and confusing to the user.',
     },
   ],
-
   practicalWalkthrough: [
     {
       kind: 'paragraph',
-      text: 'Rendering project cards from structured data.',
+      text: 'Render a list that handles every case from Module 4 lesson 20.',
     },
-    { kind: 'heading', text: '1. Type the data first' },
+    {
+      kind: 'code',
+      language: 'tsx',
+      code: 'function Projects({ state }: { state: RequestState }) {\n  if (state.status === "loading") return <Skeleton />;\n\n  if (state.status === "error") {\n    return <ErrorMessage text={state.message} onRetry={retry} />;\n  }\n\n  if (state.status === "success" && state.results.length === 0) {\n    return <EmptyState title="No projects yet" action="Create your first" />;\n  }\n\n  if (state.status === "success") {\n    return (\n      <ul>\n        {state.results.map((project) => (\n          <ProjectCard key={project.id} {...project} />\n        ))}\n      </ul>\n    );\n  }\n\n  return null;\n}',
+    },
     {
       kind: 'paragraph',
-      text: 'The card renders what the type says exists. Optional fields become branches you must write.',
+      text: 'Each case returns early, so there is no nesting. Reading top to bottom gives the designed states in order.',
     },
-    { kind: 'heading', text: '2. Key by a stable id' },
     {
       kind: 'paragraph',
-      text: 'From the data, never the index. If the data has no id, that is a data-modelling problem to fix before rendering.',
-    },
-    { kind: 'heading', text: '3. Write every branch explicitly' },
-    {
-      kind: 'paragraph',
-      text: 'Loading, empty, error, populated. Use ternaries or early returns rather than `&&`, so nothing can render as nothing by accident.',
-    },
-    { kind: 'heading', text: '4. Prove the keys are right' },
-    {
-      kind: 'paragraph',
-      text: 'Add an input to each card, type into the third one, delete the first. The text must stay with its card.',
-    },
-    { kind: 'heading', text: '5. Check the falsy trap' },
-    {
-      kind: 'paragraph',
-      text: 'Any numeric condition compared explicitly. Set every count to zero and confirm no stray zeroes appear.',
+      text: 'The narrowing from Module 6 is doing real work: `state.message` is available only in the error branch and `state.results` only in the success branches, because the union says so.',
     },
   ],
-
   commonMistakes: [
     {
-      id: 'mistake-index-key-react',
+      id: 'mistake-07-03-index-keys',
       mistake: 'Using the array index as a key.',
-      why: 'State and focus attach to position, so reordering or removal moves them to the wrong item.',
-      instead: 'Key by a stable id belonging to the data.',
+      why: 'When the list changes, state stays attached to the wrong item — a focused input, a typed value, an open menu.',
+      instead: 'Use an id from the data. If the data has none, that is worth fixing at the source.',
     },
     {
-      id: 'mistake-and-renders-zero',
-      mistake: 'Using `&&` with a numeric condition.',
-      why: 'Zero is falsy but still renders, producing a stray "0" in the interface.',
-      instead: 'Compare explicitly, or use a ternary.',
-    },
-    {
-      id: 'mistake-missing-empty-branch',
-      mistake: 'Rendering a list with `&&` and no else branch.',
-      why: 'The empty case becomes a blank region instead of a designed state.',
-      instead: 'Write the empty branch every time.',
-    },
-    {
-      id: 'mistake-impure-render',
-      mistake: 'Mutating or performing side effects during render.',
-      why: 'Render can be called more than once per commit, so the behaviour depends on internals you do not control.',
-      instead: 'Keep render pure; side effects belong in event handlers or effects.',
+      id: 'mistake-07-03-zero-renders',
+      mistake: 'Writing `{items.length && <List />}`.',
+      why: 'An empty array renders a literal `0` on the page, because zero is falsy but still renderable.',
+      instead: 'Compare explicitly: `{items.length > 0 && <List />}`.',
     },
   ],
-
-  eliteConsiderations: [
+  professionalConsideration: [
     {
-      kind: 'list',
-      items: [
-        'Generate ids when creating items locally, so keys exist before the server assigns them.',
-        'Change a component\'s `key` deliberately when you want its state reset — it is the documented way to do that.',
-        'Prefer early returns for loading and error states; nesting ternaries three deep is unreadable.',
-        'Treat a stray "0" or "false" in the interface as a falsy-rendering bug, not a data bug.',
-      ],
+      kind: 'paragraph',
+      text: 'A key is identity, and identity is a product question before it is a technical one.',
+    },
+    {
+      kind: 'paragraph',
+      text: 'If a list has no stable ids, the deeper issue is usually that the data model does not distinguish its items — which will cause trouble well beyond rendering. Generating ids in the component hides the problem; fixing it at the source solves it.',
     },
   ],
-
   practicalExercise: {
-    id: 'exercise-07-03',
-    title: 'Render project cards from structured data',
+    id: 'exercise-rendering-lists-and-conditional-ui',
+    title: 'Render project cards from data',
     prompt:
-      'Render a list of project cards with correct identity and every branch written explicitly.',
+      'Build a list that renders from an array and handles loading, error, empty-because-nothing, empty-because-filtered, and content.',
     steps: [
-      'Define the project type, including its optional fields.',
-      'Render the list keyed by a stable id from the data.',
-      'Write loading, empty, error, and populated branches explicitly.',
-      'Replace every `&&` used with a numeric condition.',
-      'Add an input to each card, type into one, then delete an earlier card.',
-      'Confirm the typed text stayed with its own card.',
-      'Sort the list and confirm state follows the data, not the position.',
+      'Define a typed array of at least six items with real ids.',
+      'Render the list with a stable key.',
+      'Add the two empty cases as separate components with different wording and actions.',
+      'Add loading and error states.',
+      'Use a discriminated union for the request, and narrow on it.',
+      'Delete an item from the middle and confirm the others keep their identity.',
+      'Switch to index keys temporarily, repeat that test, and record what breaks.',
     ],
     successCriteria: [
-      'No array indices are used as keys.',
-      'All four branches render something designed.',
-      'No `&&` remains with a numeric left-hand side.',
-      'Per-card state survives deletion and sorting.',
-      'Render contains no mutation or side effects.',
+      'Keys come from stable ids.',
+      'The two empty cases are genuinely different.',
+      'All five states render correctly.',
+      'Branching uses early returns rather than nested ternaries.',
+      'The index-key failure is reproduced and described.',
     ],
-    estimatedMinutes: 40,
-    hint: 'The input test is the proof. If the text moves when you delete a different row, the keys are lying.',
+    estimatedMinutes: 65,
+    hint: 'For the index-key test, put a text input in each row and type into one before deleting a row above it. The value follows the position, not the item.',
   },
-
-  reflectionQuestion: 'Why should array index rarely become a persistent key?',
-  reflectionHint: 'Identity survives reordering.',
-
+  reflectionQuestion:
+    'Why does using an array index as a key cause state to attach to the wrong item?',
+  reflectionHint:
+    'Ask what changes when an item is removed from the middle: the item’s identity, or its position?',
   resources: [
     {
-      id: 'resource-react-lists',
-      title: 'React: rendering lists',
+      id: 'resource-react-rendering-lists',
+      title: 'Rendering Lists',
       url: 'https://react.dev/learn/rendering-lists',
       type: 'documentation',
-      estimatedMinutes: 25,
-      note: 'Keys, and exactly what goes wrong without them.',
+      author: 'React',
+      estimatedMinutes: 30,
+      note: 'Lists and keys, including why index keys fail.',
     },
     {
-      id: 'resource-react-conditional',
-      title: 'React: conditional rendering',
+      id: 'resource-react-conditional-rendering',
+      title: 'Conditional Rendering',
       url: 'https://react.dev/learn/conditional-rendering',
       type: 'documentation',
+      author: 'React',
       estimatedMinutes: 20,
-      note: 'Including the falsy-value traps.',
-    },
-    {
-      id: 'resource-react-keeping-pure',
-      title: 'React: keeping components pure',
-      url: 'https://react.dev/learn/keeping-components-pure',
-      type: 'documentation',
-      estimatedMinutes: 20,
-      note: 'Why render must be repeatable without consequence.',
+      note: 'The patterns for choosing what to render, including the falsy-zero trap.',
     },
   ],
-
-  competencyTags: ['javascript', 'react', 'component-architecture'],
-
+  competencyTags: ['react', 'javascript', 'interface-state-modelling', 'ux-reasoning'],
   completionCriteria: [
-    'Has rendered a list with correct identity keys.',
-    'All four render branches are written explicitly.',
-    'Per-card state survives reordering and deletion.',
+    'Can render a list with correct, stable keys.',
+    'Can explain and demonstrate the index-key failure.',
+    'Handles both kinds of emptiness distinctly.',
   ],
 };
 
@@ -810,275 +827,268 @@ const LESSON_33: Lesson = {
 /* Lesson 34                                                                   */
 /* -------------------------------------------------------------------------- */
 
-const LESSON_34: Lesson = {
-  id: 'lesson-07-04',
-  slug: 'state',
+const LESSON_4: Lesson = {
+  id: 'lesson-state-in-react',
+  slug: 'state-in-react',
   moduleId: MODULE_ID,
   lessonNumber: 4,
-  title: 'State',
+  title: 'State in React',
   summary:
-    'State in React is a snapshot per render. Where it lives decides which components are coupled to it, which is an architectural choice.',
-  estimatedMinutes: 9,
-
+    'The state you modelled in Module 5, held by React so that changing it redraws the screen. The third and final appearance of the same idea.',
+  estimatedMinutes: 10,
   objectives: [
-    'Explain why state within one render is a fixed snapshot.',
-    'Update state from the previous value when the update depends on it.',
-    'Derive during render rather than storing a second copy.',
-    'Place state at the closest common owner of everything that needs it.',
+    'Hold state in a component and update it.',
+    'Explain why state must be replaced rather than modified.',
+    'Keep derived values out of state, as in Module 5.',
+    'Trace the path from an event to a redrawn screen.',
   ],
-
-  prerequisiteConcepts: ['State as single source of truth', 'Rendering'],
-  prerequisiteLessonIds: ['lesson-07-03', 'lesson-05-03'],
-
+  prerequisiteConcepts: [
+    'State as facts, Module 5',
+    'Derived state, Module 5 lesson 23',
+    'Components and rendering',
+  ],
+  prerequisiteLessonIds: [
+    'lesson-rendering-lists-and-conditional-ui',
+    'lesson-what-interface-state-means',
+  ],
   recap: [
     {
       kind: 'paragraph',
-      text: 'Module 5 argued that each fact should exist in one place and everything else should be derived. React gives that rule a mechanism and a question: which component holds the fact.',
+      text: 'You can render from props, but props come from a parent and cannot be changed. For an interface to respond to its own user, something has to be able to change — that is state.',
     },
   ],
-
+  priorKnowledge: [
+    {
+      kind: 'paragraph',
+      text: 'This is the third time you have met state. Module 5 lesson 21 defined it as what is currently true. Module 6 lesson 27 typed it as a union. Now React holds it.',
+    },
+    {
+      kind: 'paragraph',
+      text: 'The definition has not changed at all. Only the custody has.',
+    },
+  ],
   coreConcept: [
     {
       kind: 'paragraph',
-      text: 'A state variable is a value React remembers between renders. Setting it schedules a re-render; it does not change the current one. Within a single render, the value is a fixed snapshot — which is why reading it immediately after setting it gives the old value.',
+      text: '`useState` gives a component a value it can change, and tells React to redraw when it does.',
     },
-    {
-      kind: 'paragraph',
-      text: 'When the next value depends on the previous one, pass a function. `setCount(c => c + 1)` is computed at update time and composes correctly with other pending updates; `setCount(count + 1)` uses the snapshot and loses intermediate updates.',
-    },
-    {
-      kind: 'list',
-      items: [
-        'Used by one component — keep it local.',
-        'Used by two siblings — lift to their closest common parent.',
-        'Used across the application — a store, or the URL if it is navigational.',
-        'Computable from existing state — do not store it at all.',
-      ],
-    },
-    {
-      kind: 'callout',
-      tone: 'insight',
-      body: 'Lifting state is not free. Every level it rises couples more of the tree to it, so lift to the closest common owner and no further.',
-    },
-  ],
-
-  firstPrinciples: [
-    {
-      kind: 'paragraph',
-      text: 'Derived values calculated during render cannot go stale, because they are recomputed from the source every time. A derived value stored in its own state can go stale, and will, the first time a code path updates the source and forgets the copy.',
-    },
-    {
-      kind: 'paragraph',
-      text: 'The performance objection is usually unfounded at interface scale. Filtering a few hundred items costs microseconds; a stale count costs a bug report. Memoise when a measurement says to.',
-    },
-  ],
-
-  designPerspective: [
-    {
-      kind: 'paragraph',
-      text: 'State location is felt by users as scope. A filter held inside a panel resets when the panel closes. The same filter held in the URL survives a refresh and can be shared. Neither is wrong, but only one matches any given intent.',
-    },
-    {
-      kind: 'paragraph',
-      text: 'Worth deciding explicitly for each piece of state: does it survive a re-render, a navigation, a refresh, a new session? Four answers, four different homes.',
-    },
-  ],
-
-  engineeringPerspective: [
     {
       kind: 'code',
       language: 'tsx',
-      caption: 'Derived during render; updated from the previous value.',
-      code: `function ProjectList({ projects }: { projects: Project[] }) {
-  const [query, setQuery] = useState('');
-  const [status, setStatus] = useState<Status | 'all'>('all');
-
-  // Derived. Cannot be stale, because it is recomputed from the source.
-  const visible = projects.filter(
-    (p) =>
-      (status === 'all' || p.status === status) &&
-      p.name.toLowerCase().includes(query.toLowerCase()),
-  );
-
-  return (
-    <>
-      <Filters query={query} onQueryChange={setQuery} status={status} onStatusChange={setStatus} />
-      <Count value={visible.length} />
-      {visible.length > 0 ? <List items={visible} /> : <NoMatches onClear={() => setQuery('')} />}
-    </>
-  );
-}`,
+      code: 'function Counter() {\n  const [count, setCount] = useState(0);\n\n  return (\n    <button onClick={() => setCount(count + 1)}>\n      Pressed {count} times\n    </button>\n  );\n}',
     },
     {
       kind: 'paragraph',
-      text: 'The count and the visible list come from the same expression, so they cannot disagree. Storing `visibleCount` in its own state would introduce exactly that possibility.',
+      text: 'Line by line. `useState(0)` creates a piece of state starting at `0`. It returns two things: the current value and a function to change it, which the square brackets pull apart in that order.',
+    },
+    {
+      kind: 'paragraph',
+      text: '`onClick` is React’s version of the listener from Module 4 lesson 17 — same event, attached as a prop rather than with `addEventListener`.',
+    },
+    {
+      kind: 'paragraph',
+      text: '`setCount(count + 1)` sets the new value. React then re-runs the component, `count` is now one higher, and the button text is redrawn. You never touched the button.',
     },
   ],
-
+  whyDesignersCare: [
+    {
+      kind: 'paragraph',
+      text: 'Because this is where your enumerated states stop being a document and start being the product.',
+    },
+    {
+      kind: 'paragraph',
+      text: 'A state you listed in Module 5 becomes a `useState` here, and the screens you designed for it become what the component returns. If a state you designed has no corresponding value in the code, it does not exist — and that mismatch is now checkable.',
+    },
+  ],
+  howItWorks: [
+    {
+      kind: 'paragraph',
+      text: 'The rule that surprises people: you replace state, you do not modify it.',
+    },
+    {
+      kind: 'code',
+      language: 'tsx',
+      code: '// Wrong — changes the existing array. React sees no new value.\nitems.push(newItem);\nsetItems(items);\n\n// Right — a new array containing the old items and the new one.\nsetItems([...items, newItem]);',
+    },
+    {
+      kind: 'paragraph',
+      text: '`[...items, newItem]` builds a new array by spreading the old one and adding to it. The same applies to objects: `{ ...user, name: "Ada" }` is a new object with one field changed.',
+    },
+    {
+      kind: 'paragraph',
+      text: 'The reason is how React decides whether anything changed. It compares the old value with the new one; modifying in place leaves them the same thing, so nothing appears to have changed and the screen does not update.',
+    },
+  ],
+  firstPrinciples: [
+    {
+      kind: 'paragraph',
+      text: 'State is a **snapshot**. Within one run of a component, the value does not change — even after you call the setter.',
+    },
+    {
+      kind: 'code',
+      language: 'tsx',
+      code: 'function handleClick() {\n  setCount(count + 1);\n  console.log(count); // still the old value\n}',
+    },
+    {
+      kind: 'paragraph',
+      text: 'The log shows the old number, because `count` in this run is fixed. The new value exists in the *next* run.',
+    },
+    {
+      kind: 'paragraph',
+      text: 'This matters when updating twice. `setCount(count + 1)` twice adds one, not two, because both read the same snapshot. To build on the previous value, pass a function: `setCount((current) => current + 1)`.',
+    },
+  ],
+  designPerspective: [
+    {
+      kind: 'paragraph',
+      text: 'The design question is unchanged from Module 5: what is the minimal set of facts?',
+    },
+    {
+      kind: 'paragraph',
+      text: 'The discipline matters more here, because React makes it easy to add another `useState` whenever something needs to vary. A component with seven pieces of state is usually storing several things it could calculate — the Module 5 lesson 23 problem, in a new setting.',
+    },
+  ],
+  engineeringPerspective: [
+    {
+      kind: 'paragraph',
+      text: 'The engineering question is what should be state at all.',
+    },
+    {
+      kind: 'code',
+      language: 'tsx',
+      code: 'const [query, setQuery] = useState("");\nconst [items] = useState(allItems);\n\n// Derived, not state. Recalculated each render.\nconst visible = items.filter((item) => item.name.includes(query));\nconst isEmpty = visible.length === 0;',
+    },
+    {
+      kind: 'paragraph',
+      text: 'Two facts and two derivations. Had `visible` been state, it would need updating every time either the query or the items changed — and the first time somebody forgot, the list would show results for a query the user had already cleared.',
+    },
+  ],
   connectionBetweenBoth: [
     {
       kind: 'paragraph',
-      text: 'State placement decides what "closing this panel" means. A designer specifying that filters persist across panel visits is specifying that the state lives above the panel — a design decision with a structural consequence.',
+      text: 'Module 5 argued for minimal state on principle. React punishes you concretely for ignoring it.',
     },
     {
       kind: 'paragraph',
-      text: 'Making that explicit during design avoids the common outcome where persistence is decided by wherever `useState` happened to be typed.',
+      text: 'Stored derivations in React produce stale screens: the visible symptom of duplicated truth. The principle and the practical consequence line up exactly, which is unusual and worth noticing.',
     },
   ],
-
   industryExamples: [
     {
-      id: 'example-url-filters-react',
-      source: 'Applications with shareable views',
-      title: 'Filters lifted all the way to the URL',
+      id: 'example-react-state-snapshot',
+      source: 'React',
+      title: 'Snapshots documented explicitly',
       observation:
-        'Products whose filtered views can be linked keep that state in the URL rather than in component state.',
+        'The React documentation has a dedicated page explaining that state behaves as a snapshot within a render.',
       takeaway:
-        'The same interaction becomes shareable or private depending only on where the state was put.',
+        'It gets its own page because it is the most common source of confusion for people arriving from imperative code.',
     },
     {
-      id: 'example-derived-not-stored',
-      source: 'State-management guidance across libraries',
-      title: 'Store the minimum, derive the rest',
+      id: 'example-react-dev-tools',
+      source: 'React',
+      title: 'State as an inspectable thing',
       observation:
-        'Library documentation converges on storing the smallest possible set of facts and computing everything else at read time.',
+        'React DevTools shows the current state of any component in the tree.',
       takeaway:
-        'Every stored derivative is a synchronisation obligation you have taken on voluntarily.',
+        'Being able to read the actual state while using the interface is the fastest way to diagnose a screen that looks wrong.',
     },
   ],
-
   practicalWalkthrough: [
     {
       kind: 'paragraph',
-      text: 'Building interactive tabs and filters.',
+      text: 'Build a filter — two facts, everything else derived.',
     },
-    { kind: 'heading', text: '1. List the facts' },
+    {
+      kind: 'code',
+      language: 'tsx',
+      code: 'function ProjectFilter({ projects }: { projects: Project[] }) {\n  const [query, setQuery] = useState("");\n  const [status, setStatus] = useState<Status | "all">("all");\n\n  const visible = projects.filter((project) => {\n    const matchesQuery = project.name.toLowerCase().includes(query.toLowerCase());\n    const matchesStatus = status === "all" || project.status === status;\n    return matchesQuery && matchesStatus;\n  });\n\n  return (\n    <>\n      <input value={query} onChange={(e) => setQuery(e.target.value)} />\n\n      {visible.length === 0 ? (\n        <EmptyState title="No projects match these filters" action="Clear filters" />\n      ) : (\n        <ProjectList projects={visible} />\n      )}\n    </>\n  );\n}',
+    },
     {
       kind: 'paragraph',
-      text: 'Active tab, query, status filter. Three facts. Everything on screen follows from them.',
+      text: 'Two pieces of state. `visible` is recalculated every render and therefore cannot be stale. The empty state is the filtered variety, correctly — because this branch only runs when a filter is active.',
     },
-    { kind: 'heading', text: '2. Find the closest common owner' },
     {
       kind: 'paragraph',
-      text: 'For each fact, the lowest component containing everything that reads it. That is where it goes.',
-    },
-    { kind: 'heading', text: '3. Derive everything else during render' },
-    {
-      kind: 'paragraph',
-      text: 'Visible items, counts, whether the clear button is enabled, which empty state applies.',
-    },
-    { kind: 'heading', text: '4. Use updater functions where order matters' },
-    {
-      kind: 'paragraph',
-      text: 'Any update reading the previous value takes a function, not the snapshot.',
-    },
-    { kind: 'heading', text: '5. Decide persistence deliberately' },
-    {
-      kind: 'paragraph',
-      text: 'Tab in the URL, or not? Answer it on purpose, then implement that answer.',
+      text: 'The input is **controlled**: its `value` comes from state and its `onChange` updates it. The state is the single source of truth and the field displays it, which is the Module 5 principle made visible.',
     },
   ],
-
   commonMistakes: [
     {
-      id: 'mistake-derived-in-state',
-      mistake: 'Storing a value that can be computed from other state.',
-      why: 'The copy drifts as soon as one code path updates the source without it.',
-      instead: 'Compute during render; memoise only if profiling requires it.',
+      id: 'mistake-07-04-mutating-state',
+      mistake: 'Changing an array or object in place and passing it back.',
+      why: 'React compares old and new; an in-place change leaves them identical, so nothing re-renders.',
+      instead: 'Build a new value. Spread the old one and change what you need.',
     },
     {
-      id: 'mistake-stale-closure-state',
-      mistake: 'Setting state from the current snapshot when the update depends on it.',
-      why: 'The snapshot is fixed for that render, so batched updates overwrite each other.',
-      instead: 'Use the updater form.',
-    },
-    {
-      id: 'mistake-state-too-high-react',
-      mistake: 'Lifting state higher than necessary.',
-      why: 'Everything below re-renders and becomes coupled to a fact it does not use.',
-      instead: 'Place it at the closest common owner.',
-    },
-    {
-      id: 'mistake-props-to-state',
-      mistake: 'Copying a prop into state to "initialise" it.',
-      why: 'The state ignores later prop changes, producing a component displaying outdated data.',
-      instead: 'Use the prop directly, or reset with a `key` when a genuine reset is intended.',
+      id: 'mistake-07-04-derived-in-state',
+      mistake: 'Putting filtered results or counts into state.',
+      why: 'They now need updating whenever their source changes, and the first missed update produces a stale screen.',
+      instead: 'Calculate during render. It is cheap and it cannot go out of date.',
     },
   ],
-
-  eliteConsiderations: [
+  professionalConsideration: [
     {
-      kind: 'list',
-      items: [
-        'Name state by the fact it holds, not by the component it happens to control.',
-        'Group state that always changes together into one object or a reducer.',
-        'Use `useReducer` once transitions between states have rules, rather than several `useState` calls that must be kept consistent.',
-        'Ask of every piece of state what should happen on refresh; the answer often moves it to the URL.',
-      ],
+      kind: 'paragraph',
+      text: 'When several pieces of state always change together, they are probably one piece.',
+    },
+    {
+      kind: 'paragraph',
+      text: 'Three `useState` calls for `isLoading`, `data` and `error` can hold combinations that should be impossible — the Module 6 lesson 27 problem. One state holding a discriminated union cannot. If you find yourself updating three setters in the same handler every time, that is the signal.',
     },
   ],
-
   practicalExercise: {
-    id: 'exercise-07-04',
-    title: 'Create interactive tabs and filters',
+    id: 'exercise-state-in-react',
+    title: 'Build interactive filters or tabs',
     prompt:
-      'Build tabs and filters where every fact has one home and everything else is derived.',
+      'Build a filterable list or a tabbed panel where every displayed value is either state or derived from it — with nothing duplicated.',
     steps: [
-      'List every fact the interface needs to remember.',
-      'For each, identify the closest common owner and place it there.',
-      'Derive counts, visible items, and empty-state selection during render.',
-      'Use updater functions wherever an update reads the previous value.',
-      'Decide deliberately which state belongs in the URL, and implement it.',
-      'Confirm no fact is stored twice.',
-      'Refresh the page and verify the result matches the decision you made.',
+      'List the facts the interface needs. Keep it minimal.',
+      'Create a `useState` for each fact and nothing else.',
+      'Derive everything else during render.',
+      'Make every input controlled.',
+      'Add an empty state for when filters match nothing.',
+      'Try moving one derived value into state, observe what breaks, then revert it.',
+      'Check with React DevTools that your state is what you intended.',
     ],
     successCriteria: [
-      'No derived value is held in state.',
-      'Each piece of state sits at its closest common owner.',
-      'Updates depending on previous values use the updater form.',
-      'Persistence behaviour matches a written decision.',
-      'No prop is copied into state.',
+      'Only facts are in state; derivations are calculated during render.',
+      'All inputs are controlled.',
+      'State is updated by replacement, never in place.',
+      'The filtered empty state is distinct from a genuinely empty list.',
+      'The stale-state experiment is performed and described.',
     ],
-    estimatedMinutes: 45,
-    hint: 'If two pieces of state could ever contradict each other, one of them should not exist.',
+    estimatedMinutes: 70,
+    hint: 'For the experiment, store the filtered list in state and update it only in the input handler. Then change the filter by another route and watch it go stale.',
   },
-
-  reflectionQuestion: 'Where should state live?',
-  reflectionHint: 'Move truth to the closest common owner.',
-
+  reflectionQuestion:
+    'Why does React require you to replace state rather than modify it?',
+  reflectionHint:
+    'Think about how React could tell that something changed. What would it compare?',
   resources: [
     {
-      id: 'resource-react-state-snapshot',
-      title: 'React: state as a snapshot',
+      id: 'resource-react-state',
+      title: 'State: A Component’s Memory',
+      url: 'https://react.dev/learn/state-a-components-memory',
+      type: 'documentation',
+      author: 'React',
+      estimatedMinutes: 35,
+      note: 'What state is and how `useState` works, with interactive examples.',
+    },
+    {
+      id: 'resource-react-state-snapshot-docs',
+      title: 'State as a Snapshot',
       url: 'https://react.dev/learn/state-as-a-snapshot',
       type: 'documentation',
-      estimatedMinutes: 20,
-      note: 'Why reading state after setting it gives the old value.',
-    },
-    {
-      id: 'resource-react-sharing-state',
-      title: 'React: sharing state between components',
-      url: 'https://react.dev/learn/sharing-state-between-components',
-      type: 'documentation',
+      author: 'React',
       estimatedMinutes: 25,
-      note: 'Lifting, and what it costs.',
-    },
-    {
-      id: 'resource-react-state-structure-07',
-      title: 'React: choosing the state structure',
-      url: 'https://react.dev/learn/choosing-the-state-structure',
-      type: 'documentation',
-      estimatedMinutes: 30,
-      note: 'Avoiding duplication and contradiction in state.',
+      note: 'The snapshot behaviour explained properly. Read it when an update seems one step behind.',
     },
   ],
-
-  competencyTags: ['react', 'state-modelling', 'architecture'],
-
+  competencyTags: ['react', 'state-modelling', 'interface-state-modelling', 'javascript'],
   completionCriteria: [
-    'Has built a filterable interface with no duplicated state.',
-    'Every piece of state sits at its closest common owner.',
-    'Persistence behaviour matches a written decision.',
+    'Can hold and update state in a component.',
+    'Updates by replacement rather than in place.',
+    'Keeps derived values out of state.',
   ],
 };
 
@@ -1086,278 +1096,274 @@ const LESSON_34: Lesson = {
 /* Lesson 35                                                                   */
 /* -------------------------------------------------------------------------- */
 
-const LESSON_35: Lesson = {
-  id: 'lesson-07-05',
-  slug: 'effects-and-events',
+const LESSON_5: Lesson = {
+  id: 'lesson-events-effects-and-synchronisation',
+  slug: 'events-effects-and-synchronisation',
   moduleId: MODULE_ID,
   lessonNumber: 5,
-  title: 'Effects and Events',
+  title: 'Events, Effects and Synchronisation',
   summary:
-    'Most things that look like effects are not. An effect is for synchronising with something outside React, and very little else qualifies.',
-  estimatedMinutes: 9,
-
+    'Most things belong in an event handler. Effects are for keeping React in step with something outside it — and knowing when not to reach for one is the whole lesson.',
+  estimatedMinutes: 10,
   objectives: [
-    'Distinguish code that belongs in an event handler from code that belongs in an effect.',
-    'Recognise the derivations and cascades that should never be effects.',
-    'Write an effect with correct dependencies and cleanup.',
-    'Synchronise with an external system without creating a render loop.',
+    'Handle events in React.',
+    'Explain what an effect is for.',
+    'Recognise the cases where an effect is the wrong tool.',
+    'Synchronise state with something outside React, and clean up afterwards.',
   ],
-
-  prerequisiteConcepts: ['State', 'Events'],
-  prerequisiteLessonIds: ['lesson-07-04', 'lesson-05-02'],
-
+  prerequisiteConcepts: [
+    'Events from Module 4',
+    'State in React',
+    'Async handling from Module 4 lesson 20',
+  ],
+  prerequisiteLessonIds: ['lesson-state-in-react'],
   recap: [
     {
       kind: 'paragraph',
-      text: 'Rendering already reacts to state. That fact eliminates most of the reasons people reach for an effect.',
+      text: 'You can hold state and redraw from it. This lesson covers what happens at the edges — user actions coming in, and the world outside React that has to be kept in step.',
     },
   ],
-
+  priorKnowledge: [
+    {
+      kind: 'paragraph',
+      text: 'You know events from Module 4: the browser announces, your code responds. React keeps that model and changes only the attachment.',
+    },
+  ],
   coreConcept: [
     {
       kind: 'paragraph',
-      text: 'An event handler runs because a user did something specific. An effect runs because the component rendered and something it depends on changed. The distinction is causal: a handler knows what happened, an effect only knows that the world is now different.',
+      text: 'Events are attached as props and named in camel case.',
     },
-    {
-      kind: 'paragraph',
-      text: 'Effects exist to synchronise with systems outside React — the DOM directly, a subscription, a timer, browser storage, a third-party widget. If nothing outside React is involved, an effect is almost certainly the wrong tool.',
-    },
-    {
-      kind: 'list',
-      items: [
-        'Caused by an interaction — event handler.',
-        'Computable from props or state — derive during render.',
-        'Synchronising with something outside React — effect, with cleanup.',
-        'Reacting to your own state change to set more state — a cascade; restructure instead.',
-      ],
-    },
-    {
-      kind: 'callout',
-      tone: 'pitfall',
-      body: 'An effect that sets state, triggering a render, triggering the effect, is the classic loop. If an effect ends in a setter, look for the derivation you skipped.',
-    },
-  ],
-
-  firstPrinciples: [
-    {
-      kind: 'paragraph',
-      text: 'Every effect is a second source of truth about when something happens, running after paint. Chain two of them and the interface passes through intermediate states that nobody designed — visible as a flash of the wrong content.',
-    },
-    {
-      kind: 'paragraph',
-      text: 'Deriving during render avoids that entirely: the value is correct in the same render that produced the state, so there is no intermediate frame to be seen.',
-    },
-  ],
-
-  designPerspective: [
-    {
-      kind: 'paragraph',
-      text: 'Effect-driven cascades are visible. A filter changes, an effect recalculates a count, another effect updates a summary — and for one frame the interface shows a count from the previous filter.',
-    },
-    {
-      kind: 'paragraph',
-      text: 'Users read that as the product being unsure of itself. It is not a performance problem; it is a structural one made visible.',
-    },
-  ],
-
-  engineeringPerspective: [
     {
       kind: 'code',
       language: 'tsx',
-      caption: 'The unnecessary effect, and the effect that is genuinely necessary.',
-      code: `// Unnecessary: this is a derivation wearing an effect's clothes.
-const [fullName, setFullName] = useState('');
-useEffect(() => {
-  setFullName(\`\${first} \${last}\`);
-}, [first, last]);
-
-// Correct: no state, no effect, no intermediate frame.
-const fullName = \`\${first} \${last}\`;
-
-// Necessary: synchronising with something outside React, with cleanup.
-useEffect(() => {
-  const media = window.matchMedia('(prefers-reduced-motion: reduce)');
-  const onChange = () => setReducedMotion(media.matches);
-
-  onChange();
-  media.addEventListener('change', onChange);
-  return () => media.removeEventListener('change', onChange);
-}, []);`,
+      code: '<button onClick={handleSave}>Save</button>\n<input onChange={handleChange} />\n<form onSubmit={handleSubmit}>',
     },
     {
       kind: 'paragraph',
-      text: 'Cleanup is not optional. Effects re-run when dependencies change and run again after a remount, so a subscription without cleanup accumulates listeners for the lifetime of the page.',
+      text: 'Same events as Module 4 — click, change, submit — attached declaratively rather than with `addEventListener`. React also calls `preventDefault` conventions the same way, so form submission still needs it.',
     },
     {
       kind: 'paragraph',
-      text: 'Writing a preference to storage is a good example of the boundary: the write belongs in the event handler that changed the preference, because it was caused by an interaction. Only reading the initial value and reacting to outside changes needs an effect.',
+      text: 'The overwhelming majority of what an interface does belongs in a handler like these: something happened, so change some state.',
     },
   ],
-
-  connectionBetweenBoth: [
+  whyDesignersCare: [
     {
       kind: 'paragraph',
-      text: 'Getting this boundary right is what makes an interface feel decisive. Changes appear in the frame they were caused in, rather than a frame later after a cascade settles.',
+      text: 'Because the misuse of effects is responsible for a recognisable family of interface defects.',
     },
     {
       kind: 'paragraph',
-      text: 'It is the same quality question as the loading-flash from Module 5: perceived stability comes from not showing intermediate states nobody intended.',
+      text: 'The screen that flickers because it renders once and then corrects itself. The request that fires twice. The filter that resets when it should not. Each is usually an effect doing something that belonged in a handler.',
     },
   ],
-
-  industryExamples: [
+  howItWorks: [
     {
-      id: 'example-you-might-not-need-effect',
-      source: 'React documentation',
-      title: 'An official page about not using the feature',
-      observation:
-        'The React team publishes a dedicated guide enumerating the common cases where an effect is the wrong tool.',
-      takeaway:
-        'Its existence is evidence of how routinely effects are used for derivations that render already handles.',
+      kind: 'paragraph',
+      text: 'An **effect** runs after render, and exists to synchronise React with something outside it.',
     },
     {
-      id: 'example-effect-cascade-flash',
-      source: 'Dashboard interfaces',
-      title: 'Cascades visible as a flash',
-      observation:
-        'Dashboards that recompute summaries in chained effects briefly display figures from the previous filter before settling.',
-      takeaway:
-        'The user sees hesitation. The cause is structural, and no amount of optimisation removes it.',
+      kind: 'code',
+      language: 'tsx',
+      code: 'useEffect(() => {\n  document.title = `${count} unread`;\n}, [count]);',
+    },
+    {
+      kind: 'paragraph',
+      text: 'Line by line. The function is what to do. The array at the end lists what it depends on — this runs after the first render and again whenever `count` changes.',
+    },
+    {
+      kind: 'paragraph',
+      text: 'The document title is outside React. React does not manage it, so keeping it in step is exactly what an effect is for.',
+    },
+    {
+      kind: 'paragraph',
+      text: 'When an effect sets something up that must be taken down, it returns a cleanup function — which you have already written, in the autosave work of Module 4:',
+    },
+    {
+      kind: 'code',
+      language: 'tsx',
+      code: 'useEffect(() => {\n  const timer = setTimeout(save, 600);\n  return () => clearTimeout(timer);\n}, [draft]);',
+    },
+    {
+      kind: 'paragraph',
+      text: 'The returned function runs before the next effect and when the component is removed. Without it, every keystroke would leave a timer running.',
     },
   ],
-
-  practicalWalkthrough: [
+  firstPrinciples: [
     {
       kind: 'paragraph',
-      text: 'Persisting one preference without turning calculations into effects.',
+      text: 'The important half of this lesson is when **not** to use an effect.',
     },
-    { kind: 'heading', text: '1. Identify what is outside React' },
-    {
-      kind: 'paragraph',
-      text: 'Storage is. The preference value itself is not.',
-    },
-    { kind: 'heading', text: '2. Write on interaction' },
-    {
-      kind: 'paragraph',
-      text: 'The handler that changes the preference also writes it. The cause is the interaction, so the handler is the right place.',
-    },
-    { kind: 'heading', text: '3. Read once, at initialisation' },
-    {
-      kind: 'paragraph',
-      text: 'Lazy initial state reads storage once, rather than an effect that runs after the first paint and causes a flash.',
-    },
-    { kind: 'heading', text: '4. Use an effect only for outside changes' },
-    {
-      kind: 'paragraph',
-      text: 'Another tab changing the value, or the system preference changing, is a genuine synchronisation. With cleanup.',
-    },
-    { kind: 'heading', text: '5. Audit every remaining effect' },
-    {
-      kind: 'paragraph',
-      text: 'For each, name the external system it synchronises with. If you cannot, it is a derivation or a handler in disguise.',
-    },
-  ],
-
-  commonMistakes: [
-    {
-      id: 'mistake-effect-for-derived',
-      mistake: 'Using an effect to compute a value from props or state.',
-      why: 'It adds a render, an intermediate frame, and a second copy that can be stale.',
-      instead: 'Compute during render.',
-    },
-    {
-      id: 'mistake-effect-for-events',
-      mistake: 'Using an effect to respond to a user action.',
-      why: 'The effect cannot know which interaction caused it, so it fires in cases you did not intend.',
-      instead: 'Put the logic in the event handler, where the cause is known.',
-    },
-    {
-      id: 'mistake-missing-cleanup',
-      mistake: 'Subscribing without returning a cleanup function.',
-      why: 'Subscriptions accumulate across re-runs and remounts, leaking memory and firing repeatedly.',
-      instead: 'Return a cleanup from every effect that subscribes, times, or observes.',
-    },
-    {
-      id: 'mistake-lying-dependencies',
-      mistake: 'Removing a dependency to stop an effect re-running.',
-      why: 'The effect then reads stale values and produces bugs that only appear after a specific sequence of changes.',
-      instead: 'Fix the structure — move the value, use an updater, or extract a stable function.',
-    },
-  ],
-
-  eliteConsiderations: [
     {
       kind: 'list',
       items: [
-        'Give every effect a one-line comment naming the external system it synchronises with; effects that cannot be described this way should be removed.',
-        'Prefer lazy initial state over an effect that reads storage after the first paint.',
-        'Extract genuine synchronisations into named custom hooks so the intent survives.',
-        'Treat any effect whose body ends in a state setter as a code smell requiring justification.',
+        'To calculate something from state — derive it during render instead. This is Module 5 lesson 23 again.',
+        'To respond to a user action — put it in the handler, where the cause is obvious.',
+        'To reset state when a prop changes — give the component a `key` instead, so React replaces it.',
       ],
     },
+    {
+      kind: 'code',
+      language: 'tsx',
+      code: '// Wrong: renders once with the old value, then corrects itself.\nuseEffect(() => {\n  setFullName(firstName + " " + lastName);\n}, [firstName, lastName]);\n\n// Right: no extra state, no extra render.\nconst fullName = firstName + " " + lastName;',
+    },
+    {
+      kind: 'callout',
+      tone: 'insight',
+      body: 'An effect is for reaching outside React. If both the cause and the result are inside React, there is almost always a better tool.',
+    },
   ],
-
+  designPerspective: [
+    {
+      kind: 'paragraph',
+      text: 'The design question is whether the user should ever see an intermediate state.',
+    },
+    {
+      kind: 'paragraph',
+      text: 'An effect that corrects the screen after rendering produces a visible flicker — briefly showing something wrong. That is a defect a designer will notice long before an engineer does, and the cause is architectural rather than visual.',
+    },
+  ],
+  engineeringPerspective: [
+    {
+      kind: 'paragraph',
+      text: 'The engineering question is what the effect depends on and what it leaves behind.',
+    },
+    {
+      kind: 'paragraph',
+      text: 'A missing dependency means the effect uses stale values. An unnecessary one means it runs too often. A missing cleanup means timers, listeners and requests accumulate. These three account for most effect bugs, and all three are visible in the few lines around the dependency array.',
+    },
+  ],
+  connectionBetweenBoth: [
+    {
+      kind: 'paragraph',
+      text: 'The rule — handlers for actions, effects for the outside world — maps onto Module 5’s trigger categories.',
+    },
+    {
+      kind: 'paragraph',
+      text: 'User triggers become handlers. System and outside-world triggers become effects. The transition map you learned to write is, in React terms, a plan for which mechanism each arrow uses.',
+    },
+  ],
+  industryExamples: [
+    {
+      id: 'example-react-you-might-not-need-effect',
+      source: 'React',
+      title: 'An entire page on not using them',
+      observation:
+        'The React documentation has a page called "You Might Not Need an Effect", listing common misuses and their replacements.',
+      takeaway:
+        'The team wrote a page about avoiding their own API because overuse is the dominant failure mode.',
+    },
+    {
+      id: 'example-persisted-preferences',
+      source: 'Common practice',
+      title: 'Preferences that survive a reload',
+      observation:
+        'Products commonly remember a chosen view or theme between sessions by writing it to browser storage.',
+      takeaway:
+        'Storage is outside React, so keeping it in step is a legitimate effect — one of the clearest valid uses.',
+    },
+  ],
+  practicalWalkthrough: [
+    {
+      kind: 'paragraph',
+      text: 'Persist a preference — a proper use of an effect.',
+    },
+    {
+      kind: 'code',
+      language: 'tsx',
+      code: 'function useStoredTheme() {\n  const [theme, setTheme] = useState<"light" | "dark">(() => {\n    try {\n      const stored = localStorage.getItem("theme");\n      return stored === "dark" ? "dark" : "light";\n    } catch {\n      return "light";\n    }\n  });\n\n  useEffect(() => {\n    try {\n      localStorage.setItem("theme", theme);\n    } catch {\n      /* Storage blocked; the theme still applies for this session. */\n    }\n  }, [theme]);\n\n  return [theme, setTheme] as const;\n}',
+    },
+    {
+      kind: 'paragraph',
+      text: 'Three things worth noticing. `useState` is given a function rather than a value, so the stored value is read once on first render rather than on every render.',
+    },
+    {
+      kind: 'paragraph',
+      text: 'The effect writes to storage whenever the theme changes — React to outside world, which is the legitimate case. And both storage calls are wrapped, because storage can be unavailable in a private window.',
+    },
+    {
+      kind: 'paragraph',
+      text: 'What is *not* here: an effect that reads storage into state after render. That would render once with the wrong theme and then correct itself, which is the flicker.',
+    },
+  ],
+  commonMistakes: [
+    {
+      id: 'mistake-07-05-effect-for-derived',
+      mistake: 'Using an effect to calculate state from other state.',
+      why: 'It renders with the old value, then re-renders with the new one — a visible flicker and a wasted pass.',
+      instead: 'Calculate during render. No effect, no extra state, no flicker.',
+    },
+    {
+      id: 'mistake-07-05-missing-cleanup',
+      mistake: 'Setting up a timer, listener or request without a cleanup.',
+      why: 'They accumulate as the component re-renders or is removed, and a response can arrive for something no longer on screen.',
+      instead: 'If an effect sets something up, it returns the function that tears it down.',
+    },
+  ],
+  professionalConsideration: [
+    {
+      kind: 'paragraph',
+      text: 'Fetching data in an effect is the common case and the one with the most traps.',
+    },
+    {
+      kind: 'paragraph',
+      text: 'Responses can arrive out of order, the component may be gone by the time one lands, and the request may need cancelling — the problems Module 4 lesson 20 flagged. Real applications usually reach for a data library that handles these rather than writing them each time. Module 11 covers that properly; for now, knowing the traps exist is what matters.',
+    },
+  ],
   practicalExercise: {
-    id: 'exercise-07-05',
-    title: 'Persist one preference without misusing effects',
+    id: 'exercise-events-effects-and-synchronisation',
+    title: 'Persist one simple preference',
     prompt:
-      'Persist a user preference, keeping every derivation out of effects.',
+      'Build a preference — theme, a chosen view, a collapsed sidebar — that survives a reload, using exactly one effect.',
     steps: [
-      'Choose a preference — theme, density, or default filter.',
-      'Read the stored value with lazy initial state, not an effect.',
-      'Write the value in the event handler that changes it.',
-      'Add an effect only for genuine outside changes, with cleanup.',
-      'Audit every other effect in the component and name its external system.',
-      'Remove or restructure every effect that fails that test.',
-      'Verify no visible flash occurs on first paint or when the preference changes.',
+      'Hold the preference in state, reading the stored value as the initial value.',
+      'Write one effect that saves it when it changes.',
+      'Wrap every storage call so a private window cannot break the page.',
+      'Confirm the preference survives a reload.',
+      'Confirm there is no flicker of the wrong value on load.',
+      'Find one place in your component where you were tempted to add a second effect, and solve it another way.',
+      'Write down what that alternative was.',
     ],
     successCriteria: [
-      'No effect computes a value derivable during render.',
-      'The write happens in the handler, not in an effect.',
-      'Every remaining effect names its external system and has cleanup where needed.',
-      'No flash of the wrong value on load or on change.',
-      'No effect body ends in a state setter without a written justification.',
+      'Exactly one effect, and it synchronises with something outside React.',
+      'The initial value is read during initialisation, not in an effect.',
+      'No flicker of the wrong value on load.',
+      'Storage access cannot break the page.',
+      'One avoided effect is documented with its replacement.',
     ],
-    estimatedMinutes: 45,
-    hint: 'Ask what caused the change. If the answer is a user action, the code belongs in the handler.',
+    estimatedMinutes: 60,
+    hint: 'If your effect calls a state setter, stop and look again. That is the signature of an effect doing a handler’s job or a derivation’s job.',
   },
-
-  reflectionQuestion: 'Does every reaction to state require `useEffect`?',
-  reflectionHint: 'Rendering already reacts.',
-
+  reflectionQuestion:
+    'Why does calculating a value in an effect produce a visible flicker, when calculating it during render does not?',
+  reflectionHint:
+    'Count the renders in each case, and ask what is on screen during the first one.',
   resources: [
     {
-      id: 'resource-react-you-might-not-need',
-      title: 'You might not need an effect',
+      id: 'resource-react-you-might-not-need-an-effect',
+      title: 'You Might Not Need an Effect',
       url: 'https://react.dev/learn/you-might-not-need-an-effect',
       type: 'documentation',
-      estimatedMinutes: 35,
-      note: 'The definitive list of cases where an effect is the wrong tool.',
+      author: 'React',
+      estimatedMinutes: 40,
+      note: 'The most useful page in the React documentation. Read it twice.',
     },
     {
-      id: 'resource-react-synchronizing',
-      title: 'React: synchronizing with effects',
+      id: 'resource-react-synchronizing-with-effects',
+      title: 'Synchronizing with Effects',
       url: 'https://react.dev/learn/synchronizing-with-effects',
       type: 'documentation',
-      estimatedMinutes: 30,
-      note: 'What effects are actually for, including cleanup.',
-    },
-    {
-      id: 'resource-react-separating-events',
-      title: 'React: separating events from effects',
-      url: 'https://react.dev/learn/separating-events-from-effects',
-      type: 'documentation',
-      estimatedMinutes: 30,
-      note: 'The causal distinction, worked through carefully.',
+      author: 'React',
+      estimatedMinutes: 35,
+      note: 'What effects are for, dependencies, and cleanup.',
     },
   ],
-
-  competencyTags: ['javascript', 'react', 'state-modelling', 'performance'],
-
+  competencyTags: ['react', 'browser-apis', 'interaction-engineering', 'architecture'],
   completionCriteria: [
-    'Has persisted a preference without using an effect for derivation.',
-    'Every remaining effect names an external system.',
-    'No visible flash on load or change.',
+    'Can handle events in React.',
+    'Can state what an effect is for and name three cases where it is wrong.',
+    'Writes cleanup for anything an effect sets up.',
   ],
 };
 
@@ -1366,72 +1372,87 @@ useEffect(() => {
 /* -------------------------------------------------------------------------- */
 
 const PROJECT: ModuleProject = {
-  id: 'project-07',
+  id: 'project-project-management-interface',
   slug: 'project-management-interface',
   moduleId: MODULE_ID,
   title: 'Project Management Interface',
   brief:
-    'Build a project management interface with a list, filters, a detail panel, editable states, responsive layout, and reusable components.',
+    'Build a project management interface in React: a list of projects rendered from data, with filtering, inline editing, and every state from your earlier modules.',
+  learnerGoal:
+    'Build your first real React application, with a state model you can defend and no duplicated truth in it.',
   problem:
-    'A list-plus-detail interface is where state placement stops being theoretical. The list and the detail panel must agree about what is selected, filters must survive interaction with the detail, edits must be reflected in the list without a second copy of the data, and the whole thing has to collapse to a single column on a phone without losing its place. Every one of those is a decision about where a fact lives.',
+    'A project list is the archetypal product interface: many items, several filters, editing in place, and a full set of loading and empty states. It is small enough to finish and large enough that hand-wiring it would hurt.',
+  prerequisiteLessonIds: [
+    'lesson-why-react-exists',
+    'lesson-components-and-props',
+    'lesson-rendering-lists-and-conditional-ui',
+    'lesson-state-in-react',
+    'lesson-events-effects-and-synchronisation',
+  ],
   objectives: [
-    'Place every piece of state at its correct owner.',
-    'Build components whose APIs are readable from their call sites.',
-    'Render every state — loading, empty, no-matches, error, populated.',
-    'Handle editing without duplicating the source of truth.',
+    'Build an interface from composed components with typed props.',
+    'Render lists with correct keys and handle every state.',
+    'Hold a minimal state model with everything else derived.',
+    'Use effects only where React must reach outside itself.',
   ],
   requirements: [
-    'A project list rendered from structured data with stable identity keys.',
-    'Filters and search that affect the list and its counts consistently.',
-    'A detail panel showing the selected project.',
-    'Editable fields with saving, saved, and failed states.',
-    'Responsive layout: two panes on desktop, one at a time on mobile.',
-    'Reusable components with documented props.',
+    'React with TypeScript.',
+    'A list of projects rendered from typed data, with stable keys.',
+    'Filtering by at least two criteria, with both derived rather than stored.',
+    'Inline editing of at least one field.',
+    'Loading, error, empty-because-nothing and empty-because-filtered states.',
+    'Responsive layout, using the Module 2 and 3 skills.',
+    'At most one effect, and it must synchronise with something outside React.',
   ],
   constraints: [
-    'No component library; build the components you need.',
-    'No derived value may be stored in state.',
-    'Every effect must name the external system it synchronises with.',
-    'Selection and filters must survive a page refresh.',
+    'No component library. Build the components yourself.',
+    'No state that could be derived from other state.',
+    'No `any`, and no index keys.',
+    'No direct DOM manipulation — if you are reaching for `querySelector`, reconsider.',
   ],
   suggestedScope:
-    'Local data only, with simulated latency for saves. No backend, no authentication, no real persistence layer beyond browser storage and the URL.',
+    'One screen, done properly. Roughly twenty to thirty hours. It is finished when every state can be demonstrated and the state model contains only facts.',
   deliverables: [
-    'The working interface across desktop and mobile widths.',
-    'A short document recording where each piece of state lives and why.',
-    'Component documentation: props, states, and usage examples.',
-    'A list of every effect with the external system it synchronises with.',
+    'The working application.',
+    'A written list of your state, with derivations noted separately.',
+    'A note justifying each effect, or stating that there are none.',
+    'A demonstration of all four list states.',
   ],
   completionCriteria: [
-    'Selection and filters survive a refresh and can be shared as a link.',
-    'No fact is stored in two places, and no derived value sits in state.',
-    'Every render branch — loading, empty, no-matches, error, populated — is designed.',
-    'Per-item state survives sorting and deletion, proving identity keys are correct.',
-    'The mobile layout is navigable without losing the selected project.',
+    'Every state in the model is a fact; nothing derivable is stored.',
+    'Keys come from stable ids, demonstrated by deleting from the middle of the list.',
+    'All four list states render correctly.',
+    'Any effect present synchronises with something outside React and has cleanup.',
+    'The layout works from 320px upwards.',
+    'Everything is operable by keyboard.',
   ],
   portfolioEvidence: [
-    'React component decomposition',
-    'State ownership decisions',
-    'Prop API design',
-    'Responsive list and detail layout',
-    'Complete state coverage including edit failures',
+    'React fluency — composed components with typed interfaces.',
+    'State discipline — a minimal model carried through from Module 5.',
+    'State coverage — every designed state built.',
+    'Judgement — effects used sparingly and justified.',
   ],
   reflectionQuestion:
-    'Which piece of state was hardest to place, and what did the difficulty tell you about the component boundaries?',
-  estimatedHours: 18,
+    'Which piece of state did you most want to add that turned out to be derivable?',
+  estimatedHours: 25,
   competencies: [
-    'responsive-design',
     'react',
-    'state-modelling',
+    'typescript',
     'component-architecture',
+    'state-modelling',
     'interface-state-modelling',
+    'responsive-design',
+    'accessibility',
   ],
   stretchGoals: [
-    'Add optimistic editing with rollback on failure, and decide which fields deserve it.',
-    'Add keyboard navigation through the list with the detail panel following selection.',
+    'Persist the active filter in the URL so a filtered view can be shared.',
+    'Add optimistic editing with the correction designed, per Module 5 lesson 24.',
+    'Make the empty state offer to clear exactly the filter that excluded everything.',
   ],
 };
 
+/* -------------------------------------------------------------------------- */
+/* Module                                                                      */
 /* -------------------------------------------------------------------------- */
 
 export const MODULE_07: CurriculumModule = {
@@ -1441,55 +1462,73 @@ export const MODULE_07: CurriculumModule = {
   phase: 'systems',
   title: 'React Foundations',
   description:
-    'Components as boundaries, props as an API, rendering as a function of state, and the narrow set of cases that genuinely need an effect.',
-  outcome: 'Can build interfaces from composable, well-bounded components.',
+    'Describing an interface instead of updating it. Every idea here continues something you did by hand in Module 4 or modelled in Module 5 — components, props, lists, state and the small number of cases that need an effect.',
+  outcome:
+    'Can build a real React interface whose state model holds only facts and whose every designed state exists in code.',
   prerequisites: [
-    'Modules 1 to 6, or equivalent',
-    'Comfortable with JavaScript and TypeScript fundamentals',
+    'Module 4 — JavaScript, events, conditions, async',
+    'Module 5 — state models and behaviour specifications',
+    'Module 6 — TypeScript, especially discriminated unions',
   ],
-  lessons: [LESSON_31, LESSON_32, LESSON_33, LESSON_34, LESSON_35],
+  lessons: [LESSON_1, LESSON_2, LESSON_3, LESSON_4, LESSON_5],
   resources: [
     {
       id: 'resource-module-07-react-learn',
-      title: 'React: learn',
+      title: 'Learn React',
       url: 'https://react.dev/learn',
       type: 'documentation',
+      author: 'React',
       estimatedMinutes: 300,
-      note: 'The official guide; this module follows its ordering closely.',
+      note: 'The official course. Unusually good, and the primary reference for this module.',
     },
     {
       id: 'resource-module-07-thinking-in-react',
       title: 'Thinking in React',
       url: 'https://react.dev/learn/thinking-in-react',
       type: 'documentation',
+      author: 'React',
       estimatedMinutes: 30,
-      note: 'Decomposition and state placement on one worked example.',
+      note: 'Going from a design to a component tree, which is the designer’s entry point.',
     },
     {
-      id: 'resource-module-07-escape-hatches',
-      title: 'React: escape hatches',
-      url: 'https://react.dev/learn/escape-hatches',
-      type: 'documentation',
-      estimatedMinutes: 90,
-      note: 'Refs and effects, and the care each requires.',
+      id: 'resource-module-07-react-conf',
+      title: 'React on YouTube',
+      url: 'https://www.youtube.com/@reactjs',
+      type: 'video',
+      author: 'React',
+      estimatedMinutes: 60,
+      note: 'Talks from the team. Search for sessions on state and on effects.',
+    },
+    {
+      id: 'resource-module-07-devtools',
+      title: 'React Developer Tools',
+      url: 'https://react.dev/learn/react-developer-tools',
+      type: 'tool',
+      author: 'React',
+      estimatedMinutes: 20,
+      note: 'Install it before starting the project. Reading real state is how you debug a wrong screen.',
     },
   ],
   project: PROJECT,
   competencies: [
-    'responsive-design',
+    'react',
     'javascript',
     'typescript',
-    'react',
-    'state-modelling',
     'component-architecture',
-    'performance',
-    'architecture',
-    'interface-state-modelling',
     'component-api-design',
+    'state-modelling',
+    'interface-state-modelling',
+    'browser-apis',
+    'interaction-engineering',
+    'architecture',
+    'design-systems',
+    'responsive-design',
+    'accessibility',
+    'ux-reasoning',
   ],
   completionCriteria: [
     'All five lessons completed.',
     'Module project marked completed.',
-    'Can build a multi-state interface from composed components.',
+    'Can build a React interface with a minimal, defensible state model.',
   ],
 };

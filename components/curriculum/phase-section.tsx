@@ -5,7 +5,7 @@ import { usePhaseProgress, useProgressHydrated } from '@/lib/hooks/use-progress'
 import { formatCountOf, PENDING_FIGURE } from '@/lib/utils/format';
 import {
   LESSONS_PER_MODULE,
-  MODULES_PER_PHASE,
+  moduleCountForPhase,
   moduleNumbersForPhase,
   type CurriculumModule,
   type Phase,
@@ -31,10 +31,11 @@ export function PhaseSection({ phase, modules }: PhaseSectionProps) {
   const expected = moduleNumbersForPhase(phase.phaseNumber);
 
   /* Denominators come from the curriculum's design, not from how much of it
-   * happens to be written. A phase owns three modules and fifteen lessons even
-   * while two of those modules are unauthored, and a view whose job is to show
-   * the whole journey must not shrink to fit the content that exists. */
-  const designedLessons = MODULES_PER_PHASE * LESSONS_PER_MODULE;
+   * happens to be written. A phase owns the modules it was designed to own even
+   * while some are unauthored, and a view whose job is to show the whole
+   * journey must not shrink to fit the content that exists. */
+  const designedModules = moduleCountForPhase(phase.phaseNumber);
+  const designedLessons = designedModules * LESSONS_PER_MODULE;
   const byNumber = new Map(modules.map((m) => [m.moduleNumber, m]));
 
   const first = expected[0];
@@ -50,7 +51,7 @@ export function PhaseSection({ phase, modules }: PhaseSectionProps) {
           </p>
           <p className="text-caption uppercase text-text-muted" data-numeric>
             {hydrated ? progress.modulesCompleted : PENDING_FIGURE} of{' '}
-            {formatCountOf(MODULES_PER_PHASE, 'module')} complete
+            {formatCountOf(designedModules, 'module')} complete
           </p>
         </div>
 

@@ -9,6 +9,8 @@
  */
 
 import { create } from 'zustand';
+import { CURRICULUM_VERSION } from '@/lib/curriculum/version';
+import { applyCurriculumMigration } from '@/lib/progress/curriculum-migration';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import {
   LEGACY_STORAGE_KEYS,
@@ -62,6 +64,9 @@ interface ProgressActions {
   resetLesson: (lessonId: string) => void;
   resetAllProgress: () => void;
 
+  /** Archives records from an older curriculum and stamps the current version. */
+  upgradeCurriculum: () => void;
+
   /**
    * Replaces everything with the cloud document.
    *
@@ -84,6 +89,8 @@ const EMPTY_STATE: ProgressState = {
   lessons: {},
   projects: {},
   lastVisitedLessonId: null,
+  curriculumVersion: CURRICULUM_VERSION,
+  legacy: null,
 };
 
 export const useProgressStore = create<ProgressStore>()(
@@ -168,7 +175,20 @@ export const useProgressStore = create<ProgressStore>()(
           lessons: state.lessons,
           projects: state.projects,
           lastVisitedLessonId: state.lastVisitedLessonId,
+          curriculumVersion: state.curriculumVersion,
+          legacy: state.legacy,
         }),
+
+      upgradeCurriculum: () =>
+        set((state) =>
+          applyCurriculumMigration({
+            lessons: state.lessons,
+            projects: state.projects,
+            lastVisitedLessonId: state.lastVisitedLessonId,
+            curriculumVersion: state.curriculumVersion,
+            legacy: state.legacy,
+          }),
+        ),
 
       resetAllProgress: () => {
         const { hasHydrated } = get();
@@ -189,6 +209,8 @@ export const useProgressStore = create<ProgressStore>()(
         lessons: state.lessons,
         projects: state.projects,
         lastVisitedLessonId: state.lastVisitedLessonId,
+        curriculumVersion: state.curriculumVersion,
+        legacy: state.legacy,
       }),
       /* Marked hydrated even when rehydration failed. zustand calls this with
        * an undefined state on error, and a store that never reports hydration

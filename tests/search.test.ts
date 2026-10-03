@@ -122,8 +122,10 @@ describe('the real curriculum index', () => {
 
   it('finds a lesson by its exact title', () => {
     const top = search(documents, 'flexbox')[0];
-    expect(top?.document.title).toBe('Flexbox');
-    expect(top?.document.href).toBe('/curriculum/css-interface-engineering/flexbox');
+    expect(top?.document.title).toBe('Building Layouts With Flexbox');
+    expect(top?.document.href).toBe(
+      '/curriculum/html-and-css-foundations/building-layouts-with-flexbox',
+    );
   });
 
   it('finds a concept taught inside a lesson and links to that section', () => {
@@ -141,12 +143,14 @@ describe('the real curriculum index', () => {
   });
 
   it('prefers a whole-word title match over a longer word it only begins', () => {
+    /* "Grid" appears as a whole word in the Grid lesson and only as part of
+     * longer words elsewhere; the whole-word tier must win. */
     const top = search(documents, 'grid')[0];
-    expect(top?.document.title).toBe('CSS Grid');
+    expect(top?.document.title).toBe('Building Responsive Layouts With Grid');
   });
 
   it('finds a project', () => {
-    const top = search(documents, 'command palette')[0];
+    const top = search(documents, 'reusable component library')[0];
     expect(top?.document.type).toBe('project');
   });
 

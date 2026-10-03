@@ -11,9 +11,11 @@
  * and add a test that feeds in the previous shape and asserts nothing was lost.
  */
 
+import { CURRICULUM_VERSION } from '@/lib/curriculum/version';
 import { createLessonRecord, createProjectRecord } from '@/lib/progress/records';
 import {
   PROJECT_STATUSES,
+  type LegacyProgressArchive,
   type LessonProgressRecord,
   type ProgressState,
   type ProjectLinks,
@@ -97,6 +99,8 @@ export const EMPTY_PROGRESS_STATE: ProgressState = {
   lessons: {},
   projects: {},
   lastVisitedLessonId: null,
+  curriculumVersion: CURRICULUM_VERSION,
+  legacy: null,
 };
 
 function readLessonRecord(id: string, value: unknown): LessonProgressRecord {
@@ -140,6 +144,40 @@ function readProjectRecord(id: string, value: unknown): ProjectProgressRecord {
 }
 
 /**
+ * Reads an archive of records from a previous curriculum version.
+ *
+ * Tolerant like everything else here: a malformed archive becomes no archive
+ * rather than an exception, because a learner whose archive is unreadable
+ * should still be able to open the application.
+ */
+export function readLegacyArchive(value: unknown): LegacyProgressArchive | null {
+  if (!isRecord(value)) return null;
+
+  const lessonsInput = isRecord(value.lessons) ? value.lessons : {};
+  const projectsInput = isRecord(value.projects) ? value.projects : {};
+
+  const lessons: Record<string, LessonProgressRecord> = {};
+  for (const [id, record] of Object.entries(lessonsInput)) {
+    lessons[id] = readLessonRecord(id, record);
+  }
+
+  const projects: Record<string, ProjectProgressRecord> = {};
+  for (const [id, record] of Object.entries(projectsInput)) {
+    projects[id] = readProjectRecord(id, record);
+  }
+
+  if (Object.keys(lessons).length === 0 && Object.keys(projects).length === 0) return null;
+
+  return {
+    fromCurriculumVersion:
+      typeof value.fromCurriculumVersion === 'number' ? value.fromCurriculumVersion : 1,
+    archivedAt: asTimestampOrNull(value.archivedAt) ?? new Date(0).toISOString(),
+    lessons,
+    projects,
+  };
+}
+
+/**
  * Brings any stored progress payload up to the current shape.
  *
  * Written as a single tolerant read rather than a chain of per-version steps:
@@ -170,6 +208,11 @@ export function migrateProgress(persisted: unknown, _fromVersion: number): Progr
     projects,
     /* Added in v2. Absent in v1, which simply means "no lesson open yet". */
     lastVisitedLessonId: asStringOrNull(persisted.lastVisitedLessonId),
+    /* Absent means written before curriculum versioning, i.e. curriculum v1.
+     * Zero rather than 1 so "not stated" stays distinguishable from "stated as
+     * 1" — the upgrade notice only fires on the former. */
+    curriculumVersion: typeof persisted.curriculumVersion === 'number' ? persisted.curriculumVersion : 0,
+    legacy: readLegacyArchive(persisted.legacy),
   };
 }
 

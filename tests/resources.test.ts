@@ -177,7 +177,7 @@ describe('filtering', () => {
 describe('cross-linking', () => {
   it('finds resources tagged against a module and a lesson', () => {
     expect(getResourcesForModule('module-06').length).toBeGreaterThan(0);
-    expect(getResourcesForLesson('lesson-06-03').length).toBeGreaterThan(0);
+    expect(getResourcesForLesson('lesson-understanding-git').length).toBeGreaterThan(0);
   });
 
   it('resolves related ids to real curriculum links', () => {
@@ -186,7 +186,7 @@ describe('cross-linking', () => {
 
     const related = resolveRelatedLinks(proGit!);
     expect(related.modules[0]?.href).toBe(
-      '/curriculum/typescript-git-and-engineering-workflow',
+      '/curriculum/typescript-git-and-workflow',
     );
     expect(related.lessons.length).toBeGreaterThan(0);
     for (const link of [...related.modules, ...related.lessons]) {

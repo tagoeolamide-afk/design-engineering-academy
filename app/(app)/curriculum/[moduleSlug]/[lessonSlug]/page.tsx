@@ -161,9 +161,27 @@ export default async function LessonPage({ params }: LessonPageProps) {
           </LessonSection>
         )}
 
+        {has('prior-knowledge') && lesson.priorKnowledge !== undefined && (
+          <LessonSection id="prior-knowledge" title={labelOf('prior-knowledge')}>
+            <Prose blocks={lesson.priorKnowledge} />
+          </LessonSection>
+        )}
+
         {has('core-idea') && (
           <LessonSection id="core-idea" title={labelOf('core-idea')}>
             <Prose blocks={lesson.coreConcept} />
+          </LessonSection>
+        )}
+
+        {has('why-designers-care') && lesson.whyDesignersCare !== undefined && (
+          <LessonSection id="why-designers-care" title={labelOf('why-designers-care')}>
+            <Prose blocks={lesson.whyDesignersCare} />
+          </LessonSection>
+        )}
+
+        {has('how-it-works') && lesson.howItWorks !== undefined && (
+          <LessonSection id="how-it-works" title={labelOf('how-it-works')}>
+            <Prose blocks={lesson.howItWorks} />
           </LessonSection>
         )}
 
@@ -206,9 +224,15 @@ export default async function LessonPage({ params }: LessonPageProps) {
           </LessonSection>
         )}
 
-        {has('elite') && (
-          <LessonSection id="elite" title={labelOf('elite')}>
-            <Prose blocks={lesson.eliteConsiderations} />
+        {has('professional') && (
+          <LessonSection id="professional" title={labelOf('professional')}>
+            <Prose blocks={lesson.professionalConsideration} />
+          </LessonSection>
+        )}
+
+        {has('go-deeper') && lesson.goDeeper !== undefined && (
+          <LessonSection id="go-deeper" title={labelOf('go-deeper')}>
+            <Prose blocks={lesson.goDeeper} />
           </LessonSection>
         )}
 

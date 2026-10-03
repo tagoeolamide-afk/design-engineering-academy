@@ -47,10 +47,12 @@ export function useProgressSnapshot(): ProgressState {
   const lessons = useProgressStore((state) => state.lessons);
   const projects = useProgressStore((state) => state.projects);
   const lastVisitedLessonId = useProgressStore((state) => state.lastVisitedLessonId);
+  const curriculumVersion = useProgressStore((state) => state.curriculumVersion);
+  const legacy = useProgressStore((state) => state.legacy);
 
   return useMemo(
-    () => ({ lessons, projects, lastVisitedLessonId }),
-    [lessons, projects, lastVisitedLessonId],
+    () => ({ lessons, projects, lastVisitedLessonId, curriculumVersion, legacy }),
+    [lessons, projects, lastVisitedLessonId, curriculumVersion, legacy],
   );
 }
 

@@ -72,6 +72,22 @@ export interface ProjectProgressRecord {
 }
 
 /** The complete persisted progress shape. */
+/**
+ * Records that belonged to a previous curriculum version.
+ *
+ * Kept rather than deleted. Their ids resolve to nothing in the current
+ * curriculum, so they can never contribute to a status or a percentage, but
+ * they are still the learner's record of work they actually did — and the
+ * reflections and project links inside them are writing, not derived data.
+ */
+export interface LegacyProgressArchive {
+  /** The curriculum version these records were written against. */
+  readonly fromCurriculumVersion: number;
+  readonly archivedAt: Timestamp;
+  readonly lessons: Readonly<Record<string, LessonProgressRecord>>;
+  readonly projects: Readonly<Record<string, ProjectProgressRecord>>;
+}
+
 export interface ProgressState {
   readonly lessons: Readonly<Record<string, LessonProgressRecord>>;
   readonly projects: Readonly<Record<string, ProjectProgressRecord>>;
@@ -83,6 +99,17 @@ export interface ProgressState {
    * a lesson they jumped ahead to read.
    */
   readonly lastVisitedLessonId: string | null;
+  /**
+   * Which curriculum the ids in this record refer to.
+   *
+   * 0 means "not stated", which is how everything written before curriculum
+   * versioning existed reads. The upgrade is not applied automatically on load:
+   * the learner is told first, because archiving their completion record is
+   * their decision to acknowledge rather than ours to make quietly.
+   */
+  readonly curriculumVersion: number;
+  /** Records from an earlier curriculum, moved aside rather than discarded. */
+  readonly legacy: LegacyProgressArchive | null;
 }
 
 /* -------------------------------------------------------------------------- */

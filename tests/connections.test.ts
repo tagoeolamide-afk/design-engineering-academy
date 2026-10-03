@@ -13,11 +13,11 @@ import { getLessonById } from '@/lib/curriculum/queries';
 describe('the authored chains', () => {
   it('includes the five named chains', () => {
     expect(CONCEPT_CHAINS.map((chain) => chain.id)).toEqual([
-      'state',
-      'systems',
       'interaction',
+      'layout',
+      'components',
+      'state',
       'quality',
-      'performance',
     ]);
   });
 
@@ -123,15 +123,15 @@ describe('resolution', () => {
 
 describe('reverse lookup', () => {
   it('finds the chains a lesson appears in', () => {
-    /* Interfaces Are Stateful Systems is deliberately in two chains: it is
-     * where both the state thread and the interaction thread begin. */
-    const chains = getChainsForLesson('lesson-01-01');
-    expect(chains.map((chain) => chain.id)).toEqual(['state', 'interaction']);
+    /* The opening lesson is deliberately in two chains: it is where both the
+     * state thread and the interaction thread begin. */
+    const chains = getChainsForLesson('lesson-what-makes-an-interface-interactive');
+    expect(chains.map((chain) => chain.id)).toEqual(['interaction', 'state']);
   });
 
   it('returns nothing for a lesson no chain references', () => {
     const referenced = new Set(getChainLessonIds());
-    const unreferenced = ['lesson-06-05', 'lesson-15-05'].find(
+    const unreferenced = ['lesson-06-05', 'lesson-15-05', 'lesson-not-in-any-chain'].find(
       (id) => !referenced.has(id),
     );
 

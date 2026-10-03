@@ -23,7 +23,7 @@ import type { CurriculumModule, LessonLocation } from '@/types/curriculum';
 import {
   isPhaseId,
   LESSONS_PER_MODULE,
-  MODULES_PER_PHASE,
+  moduleCountForPhase,
   TOTAL_LESSONS,
   TOTAL_MODULES,
 } from '@/types/curriculum';
@@ -375,18 +375,22 @@ export function checkCurriculumIntegrity(index: CurriculumIndex): IntegrityRepor
   issues.push(...checkPrerequisites(lessons));
 
   for (const phase of index.getPhases()) {
+    /* Phases are deliberately uneven — 3, 3, 4, 3, 2 — so each is checked
+     * against the size it was designed to be rather than a single constant. */
+    const designed = moduleCountForPhase(phase.phaseNumber);
     const phaseModules = index.getModulesInPhase(phase.id);
-    if (phaseModules.length > MODULES_PER_PHASE) {
+
+    if (phaseModules.length > designed) {
       issues.push({
         severity: 'error',
         scope: `phase:${phase.slug}`,
-        message: `Has ${phaseModules.length} modules, more than the ${MODULES_PER_PHASE} a phase may contain.`,
+        message: `Has ${phaseModules.length} modules, more than the ${designed} this phase is designed to hold.`,
       });
-    } else if (phaseModules.length < MODULES_PER_PHASE) {
+    } else if (phaseModules.length < designed) {
       issues.push({
         severity: 'info',
         scope: `phase:${phase.slug}`,
-        message: `${phaseModules.length} of ${MODULES_PER_PHASE} modules authored.`,
+        message: `${phaseModules.length} of ${designed} modules authored.`,
       });
     }
   }

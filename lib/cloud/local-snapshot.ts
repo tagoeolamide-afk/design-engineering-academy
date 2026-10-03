@@ -30,6 +30,8 @@ export function readLocalLearningState(): LearningStateData {
       lessons: progress.lessons,
       projects: progress.projects,
       lastVisitedLessonId: progress.lastVisitedLessonId,
+      curriculumVersion: progress.curriculumVersion,
+      legacy: progress.legacy,
     },
     notes: notes.notes,
     resources: resources.marks,

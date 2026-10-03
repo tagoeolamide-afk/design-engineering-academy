@@ -1,264 +1,399 @@
 /**
  * The authored concept chains.
  *
+ * The curriculum is taught in fifteen modules, which is a teaching order rather
+ * than a description of how the subject fits together. A chain traces one idea
+ * as it reappears at each level, so the learner can see that the modules are
+ * views onto one discipline rather than fifteen separate topics.
+ *
  * Each step's `contribution` says what that level adds — the point of a chain
  * is that the same idea acquires a new problem at each scale, not that the
  * words are related. Lesson ids are checked by the tests, so a renamed or
  * removed lesson fails the build rather than leaving a dead link.
+ *
+ * The five chains are the five threads the curriculum is built around:
+ * interaction, layout, components, state and quality.
+ *
+ * Four of the five run strictly forwards through the course, which doubles as a
+ * check on the teaching order — a chain that had to jump backwards would
+ * usually mean a module was in the wrong place.
+ *
+ * Quality is the exception, deliberately. Its order is one of conceptual
+ * dependency rather than teaching order: performance sits after design QA
+ * because you cannot sensibly optimise an interface whose behaviour has not
+ * been verified, yet module 13 teaches rendering cost before it teaches QA,
+ * because QA needs the vocabulary that the rendering lessons establish. Both
+ * orders are right for their own purpose, so the chain keeps the conceptual one
+ * and this comment records why it disagrees with the syllabus.
  */
 
 import type { ConceptChain } from '@/types/connections';
 
 export const CONCEPT_CHAINS: readonly ConceptChain[] = [
-  {
-    id: 'state',
-    title: 'State',
-    subtitle: 'One fact, followed from a single screen to a whole application.',
-    whyConnected:
-      'Every one of these is the same question asked at a larger scale: what is true right now, and who is allowed to change it. An interface state is a fact you can see; a JavaScript variable is that fact written down; React state is that variable placed somewhere in a tree; ownership is deciding where; async state is admitting the fact may be out of date; architecture is that decision made for every fact at once. Nothing new is introduced along the way — the question just gets harder to answer as more things can change it.',
-    links: [
-      {
-        id: 'interface-state',
-        label: 'Interface state',
-        contribution:
-          'Names what an interface is underneath the picture of it: a set of states, and rules for moving between them.',
-        lessonIds: ['lesson-01-01', 'lesson-01-02'],
-      },
-      {
-        id: 'javascript-state',
-        label: 'JavaScript state',
-        contribution:
-          'Puts those states into values and transformations, where the shape you choose decides which screens are easy to build.',
-        lessonIds: ['lesson-05-01', 'lesson-05-03'],
-      },
-      {
-        id: 'react-state',
-        label: 'React state',
-        contribution:
-          'Ties the value to what is rendered, so the screen becomes a function of the state rather than something kept in sync with it.',
-        lessonIds: ['lesson-07-04', 'lesson-07-03'],
-      },
-      {
-        id: 'state-ownership',
-        label: 'Component state ownership',
-        contribution:
-          'Adds the question a single component never has to ask: which component is allowed to change this, and who merely reads it.',
-        lessonIds: ['lesson-08-05', 'lesson-08-01'],
-      },
-      {
-        id: 'async-state',
-        label: 'Async state',
-        contribution:
-          'Admits that a fact takes time to establish and can fail, which turns one value into loading, empty, error, and stale.',
-        lessonIds: ['lesson-05-05', 'lesson-11-01', 'lesson-11-02'],
-      },
-      {
-        id: 'application-architecture',
-        label: 'Application architecture',
-        contribution:
-          'Answers the ownership and staleness questions once, for every fact in the product, by giving each kind of state a defined home.',
-        lessonIds: ['lesson-13-01', 'lesson-13-02'],
-      },
-    ],
-  },
-
-  {
-    id: 'systems',
-    title: 'Systems',
-    subtitle: 'A single spacing decision, compounded until it becomes an architecture.',
-    whyConnected:
-      'This chain is one idea repeated: a decision made once and reused is worth more than the same decision made well a hundred times. A spacing scale is the smallest version of that. A token gives the decision a name, a component gives it behaviour, a pattern gives it judgement, a design system gives it governance, and product architecture applies it to the structure of the application itself. Each step widens what can be decided once — and each inherits the same failure mode, which is an exception nobody wrote down.',
-    links: [
-      {
-        id: 'spacing',
-        label: 'Spacing',
-        contribution:
-          'The first constrained scale: a short set of values that makes the consistent choice the easy one.',
-        lessonIds: ['lesson-02-02', 'lesson-02-05'],
-      },
-      {
-        id: 'tokens',
-        label: 'Tokens',
-        contribution:
-          'Gives the decision a name, so meaning survives when the value behind it changes.',
-        lessonIds: ['lesson-09-01', 'lesson-04-05'],
-      },
-      {
-        id: 'components',
-        label: 'Components',
-        contribution:
-          'Attaches behaviour to the named decision, and turns the boundary into an API other people use.',
-        lessonIds: ['lesson-07-01', 'lesson-08-01', 'lesson-08-02'],
-      },
-      {
-        id: 'patterns',
-        label: 'Patterns',
-        contribution:
-          'Captures the judgement a component API cannot hold: how several of them combine to solve a recurring problem.',
-        lessonIds: ['lesson-09-04'],
-      },
-      {
-        id: 'design-system',
-        label: 'Design system',
-        contribution:
-          'Adds parity and governance, so the decisions hold across two environments and survive contact with a deadline.',
-        lessonIds: ['lesson-09-02', 'lesson-09-03', 'lesson-09-05'],
-      },
-      {
-        id: 'product-architecture',
-        label: 'Product architecture',
-        contribution:
-          'Applies the same discipline to structure rather than appearance: where state lives, what owns data, how failure is contained.',
-        lessonIds: ['lesson-13-01', 'lesson-13-03'],
-      },
-    ],
-  },
-
+  /* ------------------------------------------------------------------------ */
+  /* Interaction                                                              */
+  /* ------------------------------------------------------------------------ */
   {
     id: 'interaction',
     title: 'Interaction',
-    subtitle: 'One press, traced from the promise it makes to the people it must not exclude.',
+    subtitle:
+      'One press, followed from the control that promised something to the architecture that has to honour it.',
     whyConnected:
-      'These are the stages of a single interaction, in the order they happen. An affordance promises something; an event is the user taking the promise up; a transition is the system changing because of it; feedback is the system saying so; motion is how that change is explained; accessibility is making sure the whole sequence works for someone who cannot see it, cannot use a mouse, or cannot tolerate movement. Skipping any stage produces a specific, recognisable defect — a control that lies, a press that does nothing, a change nobody noticed.',
+      'These are the stages of a single interaction, in the order they happen. A control makes a promise before anything is pressed; an event is the user taking that promise up; feedback is the system saying it heard; state is what actually changed; React state is that change placed somewhere a tree can render from; async state is admitting the change may not have reached the server yet; architecture is making that decision once for every interaction in the product. Skipping a stage produces a specific, recognisable defect — a control that lies, a press that does nothing, a change nobody noticed, a save that silently failed.',
     links: [
       {
-        id: 'affordance',
-        label: 'Affordance',
+        id: 'controls',
+        label: 'Controls',
         contribution:
-          'The promise the control makes before anything is pressed, and the expectation it sets.',
-        lessonIds: ['lesson-01-03'],
+          'The promise the interface makes before anything happens, and the native behaviour that promise arrives with.',
+        lessonIds: [
+          'lesson-buttons-links-inputs-and-controls',
+          'lesson-what-makes-an-interface-interactive',
+        ],
       },
       {
-        id: 'event',
-        label: 'Event',
+        id: 'events',
+        label: 'Events',
         contribution:
-          'The user acting on that promise, arriving as input the system can actually receive.',
-        lessonIds: ['lesson-05-02', 'lesson-03-02'],
-      },
-      {
-        id: 'state-transition',
-        label: 'State transition',
-        contribution:
-          'The system moving from one state to another, which is the only thing that makes the press meaningful.',
-        lessonIds: ['lesson-01-01', 'lesson-01-04'],
+          'The user acting on that promise, arriving as input the system can receive and respond to.',
+        lessonIds: [
+          'lesson-events-clicks-and-user-input',
+          'lesson-what-happens-when-a-user-takes-an-action',
+        ],
       },
       {
         id: 'feedback',
         label: 'Feedback',
         contribution:
-          'Telling the user the transition happened — without it, a working system is indistinguishable from a broken one.',
-        lessonIds: ['lesson-01-02', 'lesson-11-01'],
+          'Telling the user the system heard — and, with motion, explaining what changed rather than only announcing it.',
+        lessonIds: [
+          'lesson-feedback-loading-success-and-error',
+          'lesson-why-interfaces-move',
+          'lesson-timing-and-easing',
+        ],
       },
       {
-        id: 'motion',
-        label: 'Motion',
+        id: 'state',
+        label: 'State',
         contribution:
-          'Explaining the change rather than only announcing it: where the thing came from, and what is now different.',
-        lessonIds: ['lesson-10-01', 'lesson-10-02', 'lesson-10-03'],
+          'What actually changed, expressed as facts rather than as the screens those facts produce.',
+        lessonIds: [
+          'lesson-what-interface-state-means',
+          'lesson-moving-from-one-state-to-another',
+        ],
       },
       {
-        id: 'accessibility',
-        label: 'Accessibility',
+        id: 'react-state',
+        label: 'React state',
         contribution:
-          'Making every earlier stage work without sight, without a pointer, and without movement.',
-        lessonIds: ['lesson-03-03', 'lesson-03-05', 'lesson-10-05'],
+          'Those facts held where a component tree can redraw from them, so the screen follows the state instead of being nudged towards it.',
+        lessonIds: ['lesson-state-in-react', 'lesson-events-effects-and-synchronisation'],
+      },
+      {
+        id: 'async-state',
+        label: 'Async state',
+        contribution:
+          'Admitting the change may not have landed: in flight, stale, rolled back, or refused by a server that disagreed.',
+        lessonIds: [
+          'lesson-loading-empty-success-and-error-states',
+          'lesson-optimistic-updates',
+        ],
+      },
+      {
+        id: 'product-architecture',
+        label: 'Product architecture',
+        contribution:
+          'The same decision made once for every interaction in the product, including what happens when any of them fails.',
+        lessonIds: [
+          'lesson-errors-recovery-and-resilience',
+          'lesson-thinking-about-product-architecture',
+        ],
       },
     ],
   },
 
+  /* ------------------------------------------------------------------------ */
+  /* Layout                                                                   */
+  /* ------------------------------------------------------------------------ */
+  {
+    id: 'layout',
+    title: 'Layout',
+    subtitle: 'A decision about emphasis, followed until it is a value the whole product shares.',
+    whyConnected:
+      'Every step here turns a judgement into something more durable than a judgement. Hierarchy decides what matters most; spacing expresses that decision as distance; CSS layout makes those distances real in a browser, where content has a size you did not choose; responsive design holds them at every width rather than the one the design was drawn at; a token gives a distance a name so it stops being retyped; a design system collects the names and adds rules for choosing between them. Nothing new is introduced along the way — the decision simply stops being something one person remembers and becomes something the product enforces.',
+    links: [
+      {
+        id: 'hierarchy',
+        label: 'Hierarchy',
+        contribution:
+          'Decides what the eye reaches first, and therefore what every later decision is arranging.',
+        lessonIds: ['lesson-visual-hierarchy', 'lesson-typography-for-interfaces'],
+      },
+      {
+        id: 'spacing',
+        label: 'Spacing',
+        contribution:
+          'Expresses that hierarchy as distance, grouping things by proximity rather than by border.',
+        lessonIds: ['lesson-spacing-and-rhythm'],
+      },
+      {
+        id: 'css-layout',
+        label: 'CSS layout',
+        contribution:
+          'Makes those distances real in a browser, where the content has a size you did not pick.',
+        lessonIds: [
+          'lesson-the-css-box-model',
+          'lesson-building-layouts-with-flexbox',
+          'lesson-building-responsive-layouts-with-grid',
+        ],
+      },
+      {
+        id: 'responsive-design',
+        label: 'Responsive design',
+        contribution:
+          'Holds the hierarchy at every width, including the ones between the breakpoints nobody designed.',
+        /* The thinking starts in module 2 lesson 10, but it is only *built* here,
+         * which is what keeps this step after CSS layout rather than before it. */
+        lessonIds: [
+          'lesson-building-responsive-layouts-with-grid',
+          'lesson-turning-a-figma-design-into-a-browser-interface',
+        ],
+      },
+      {
+        id: 'tokens',
+        label: 'Tokens',
+        contribution:
+          'Gives each value a name, so an off-scale number becomes conspicuous instead of invisible.',
+        lessonIds: ['lesson-design-tokens', 'lesson-system-foundations'],
+      },
+      {
+        id: 'design-system',
+        label: 'Design system',
+        contribution:
+          'Collects the names into one vocabulary with guidance, and keeps it true in both tools at once.',
+        lessonIds: [
+          'lesson-components-across-figma-and-code',
+          'lesson-governance-and-maintaining-a-system',
+        ],
+      },
+    ],
+  },
+
+  /* ------------------------------------------------------------------------ */
+  /* Components                                                               */
+  /* ------------------------------------------------------------------------ */
+  {
+    id: 'components',
+    title: 'Components',
+    subtitle:
+      'A box drawn on a screenshot, followed until it is a contract other people depend on.',
+    whyConnected:
+      'This chain is one question asked with rising stakes: where does one part of an interface end? Drawing boxes on a screenshot costs nothing to get wrong. A React component makes the boundary real. An API turns it into something other code depends on, so a rename becomes a coordinated change. Composition decides what the caller may vary and what the component insists on. Accessibility puts the behaviour that must be correct inside the boundary, paid for once rather than at every call site. A design system makes the whole set a vocabulary with rules. The reasoning never changes; the cost of a wrong boundary rises at every step.',
+    links: [
+      {
+        id: 'interface-parts',
+        label: 'Interface parts',
+        contribution:
+          'Noticing that an interface is made of repeated parts, and that behaviour is a better boundary than appearance.',
+        lessonIds: ['lesson-breaking-an-interface-into-parts'],
+      },
+      {
+        id: 'react-components',
+        label: 'React components',
+        contribution:
+          'Makes the boundary real: a function with typed inputs that returns what to show.',
+        lessonIds: ['lesson-components-and-props', 'lesson-rendering-lists-and-conditional-ui'],
+      },
+      {
+        id: 'component-apis',
+        label: 'Component APIs',
+        contribution:
+          'Turns the props into a contract other code relies on — harder to change than the implementation behind it.',
+        lessonIds: [
+          'lesson-choosing-component-boundaries',
+          'lesson-designing-component-apis',
+          'lesson-variants-without-complexity',
+        ],
+      },
+      {
+        id: 'composition',
+        label: 'Composition',
+        contribution:
+          'Decides what the caller assembles and what the component owns, so flexibility does not cost consistency.',
+        lessonIds: ['lesson-composition'],
+      },
+      {
+        id: 'accessible-components',
+        label: 'Accessible components',
+        contribution:
+          'Puts the behaviour that must be correct — focus, keyboard, announcement — inside the boundary, once.',
+        lessonIds: [
+          'lesson-building-accessible-components',
+          'lesson-keyboard-and-focus',
+          'lesson-direct-manipulation-and-gestures',
+        ],
+      },
+      {
+        id: 'design-systems',
+        label: 'Design systems',
+        contribution:
+          'Makes the set a vocabulary with patterns and governance, so it survives a growing product.',
+        lessonIds: [
+          'lesson-patterns-and-product-workflows',
+          'lesson-governance-and-maintaining-a-system',
+        ],
+      },
+    ],
+  },
+
+  /* ------------------------------------------------------------------------ */
+  /* State                                                                    */
+  /* ------------------------------------------------------------------------ */
+  {
+    id: 'state',
+    title: 'State',
+    subtitle: 'One fact, followed from a single screen to two devices that disagree about it.',
+    whyConnected:
+      'Every step asks the same question at a larger scale: what is true right now, and who is allowed to change it. A feedback state is a fact you can see. A condition uses that fact to make a decision. Interface state reduces the facts to a minimum and derives the rest. React state places one of them in a tree. Ownership decides where in the tree. URL state lifts it out of the application entirely, to somewhere the user can edit. Server state admits you only hold a copy, with an age. Synchronisation is what happens when two copies disagree. Nothing new is introduced along the way; the question just gets harder to answer as more things can change the answer.',
+    links: [
+      {
+        id: 'feedback-states',
+        label: 'Feedback states',
+        contribution:
+          'The first facts the learner can see: idle, loading, success, error — each needing its own screen.',
+        lessonIds: [
+          'lesson-feedback-loading-success-and-error',
+          'lesson-what-makes-an-interface-interactive',
+        ],
+      },
+      {
+        id: 'javascript-conditions',
+        label: 'JavaScript conditions',
+        contribution:
+          'Uses those facts to decide what the interface does, including which kind of empty this is.',
+        lessonIds: ['lesson-conditions-and-interface-decisions', 'lesson-forms-and-validation'],
+      },
+      {
+        id: 'interface-state',
+        label: 'Interface state',
+        contribution:
+          'Reduces the facts to the minimum, derives everything else, and maps the moves between them.',
+        lessonIds: [
+          'lesson-what-interface-state-means',
+          'lesson-derived-state-and-avoiding-duplicate-truth',
+          'lesson-mapping-product-behaviour-before-coding',
+        ],
+      },
+      {
+        id: 'react-state',
+        label: 'React state',
+        contribution:
+          'Holds a fact where a component can redraw from it, and makes a stored derivation visibly stale.',
+        lessonIds: ['lesson-state-in-react'],
+      },
+      {
+        id: 'state-ownership',
+        label: 'State ownership',
+        contribution:
+          'Decides which component owns each fact: the closest common owner, and no higher.',
+        lessonIds: ['lesson-where-state-should-live'],
+      },
+      {
+        id: 'url-state',
+        label: 'URL state',
+        contribution:
+          'Lifts a fact out of the application, to somewhere shareable and linkable — and user-editable, so untrusted.',
+        lessonIds: ['lesson-url-state-and-persistence', 'lesson-search-filters-and-sorting'],
+      },
+      {
+        id: 'server-state',
+        label: 'Server state',
+        contribution:
+          'Admits you hold a copy with an age, which is why staleness and refetching are states in their own right.',
+        lessonIds: ['lesson-local-global-url-and-server-state'],
+      },
+      {
+        id: 'synchronisation',
+        label: 'Synchronisation',
+        contribution:
+          'Handles two copies disagreeing: a conflict guard, a merge where the data allows one, a decision where it does not.',
+        lessonIds: ['lesson-caching-and-synchronisation'],
+      },
+    ],
+  },
+
+  /* ------------------------------------------------------------------------ */
+  /* Quality                                                                  */
+  /* ------------------------------------------------------------------------ */
   {
     id: 'quality',
     title: 'Quality',
-    subtitle: 'What a correct document becomes once you keep asking whether it still holds.',
+    subtitle:
+      'A correctly chosen element, followed until it is a property the whole product can be measured against.',
     whyConnected:
-      'Quality is not a final polish pass; it is a property that either accumulates from the first decision or cannot be added later. Semantic HTML is the first checkpoint — get the element wrong and accessibility must be rebuilt by hand. Correct semantics make interaction behaviour mostly free. Behaviour that is defined can be tested. Tests catch what you thought to specify, and design QA catches what nobody specified. Product quality is what is left when all five have been applied, which is why it cannot be bolted on at the end.',
+      'Quality is not a polish pass; it either accumulates from the first decision or cannot be added later. Semantic HTML is the first checkpoint — get the element wrong and every later stage is rebuilt by hand. Accessibility is that structure verified rather than assumed. Component quality moves the verified behaviour inside a boundary, so every use inherits it. Testing makes a designed behaviour impossible to lose quietly. Design QA catches what tests cannot see. Performance asks whether any of it is usable on a real device. Architecture decides whether the next change can be made without undoing the rest. Each stage depends on the one before it being right.',
     links: [
       {
         id: 'semantic-html',
         label: 'Semantic HTML',
         contribution:
-          'Chooses elements for meaning, so structure and relationships exist before any script runs.',
-        lessonIds: ['lesson-03-01'],
+          'The first checkpoint: an element carries meaning and behaviour, and choosing wrong means rebuilding both.',
+        lessonIds: [
+          'lesson-html-gives-interfaces-structure-and-meaning',
+          'lesson-semantic-interfaces',
+        ],
       },
       {
-        id: 'accessibility-tree',
+        id: 'accessibility',
         label: 'Accessibility',
         contribution:
-          'Turns that meaning into what assistive technology actually reads, and into a working keyboard path.',
-        lessonIds: ['lesson-03-04', 'lesson-03-03'],
+          'Verifies the structure rather than trusting it — role, name and state, read from the tree.',
+        lessonIds: [
+          'lesson-the-accessibility-tree-and-aria',
+          'lesson-accessible-forms-and-errors',
+          'lesson-reduced-motion-and-accessible-animation',
+        ],
       },
       {
-        id: 'interaction-behaviour',
-        label: 'Interaction behaviour',
+        id: 'component-quality',
+        label: 'Component quality',
         contribution:
-          'Makes every control do what its appearance promises, under every input, including interruption.',
-        lessonIds: ['lesson-03-02', 'lesson-10-04', 'lesson-14-03'],
+          'Moves the verified behaviour inside a component, so every use inherits it instead of re-earning it.',
+        lessonIds: ['lesson-building-accessible-components'],
       },
       {
         id: 'testing',
         label: 'Testing',
         contribution:
-          'Holds that behaviour in place through the next change, with effort weighted by what failure would cost.',
-        lessonIds: ['lesson-13-04'],
+          'Makes a designed behaviour impossible to lose quietly, by asserting what a user would notice.',
+        lessonIds: ['lesson-testing-important-product-behaviour'],
       },
       {
         id: 'design-qa',
         label: 'Design QA',
         contribution:
-          'Finds what tests cannot: the defects nobody specified, under real content and real conditions.',
-        lessonIds: ['lesson-13-05', 'lesson-14-02'],
+          'Catches what tests cannot see: drift from the tokens, a state nobody built, a width nobody checked.',
+        lessonIds: ['lesson-design-qa', 'lesson-debugging-with-browser-tools'],
       },
       {
-        id: 'product-quality',
-        label: 'Product quality',
+        id: 'performance',
+        label: 'Performance',
         contribution:
-          'The result — perceived at the weakest point, which is why raising the floor matters more than raising the ceiling.',
-        lessonIds: ['lesson-14-01', 'lesson-14-05'],
-      },
-    ],
-  },
-
-  {
-    id: 'performance',
-    title: 'Performance',
-    subtitle: 'A layout choice, followed until it becomes something the user feels.',
-    whyConnected:
-      'Each step here is a cost the previous one commits you to. A layout decision determines what the browser must recompute; what it recomputes determines which animations are cheap; expensive animation and long scripts compete for the same single thread; and what that thread is doing when someone clicks is exactly what they experience as responsiveness. This is why performance cannot be a separate phase — by the time it is measurable, the decisions that caused it were made in the layout and the animation.',
-    links: [
-      {
-        id: 'layout',
-        label: 'Layout',
-        contribution:
-          'Decides the geometry the browser has to compute, and how far a single change propagates.',
-        lessonIds: ['lesson-04-01', 'lesson-04-03'],
+          'Asks whether any of it is usable on a real device, measured rather than assumed.',
+        lessonIds: [
+          'lesson-how-the-browser-renders-an-interface',
+          'lesson-frontend-performance-fundamentals',
+        ],
       },
       {
-        id: 'browser-rendering',
-        label: 'Browser rendering',
+        id: 'product-architecture',
+        label: 'Product architecture',
         contribution:
-          'Turns that geometry into pixels through fixed stages, where the stage a change enters at is its cost.',
-        lessonIds: ['lesson-12-01', 'lesson-12-02'],
-      },
-      {
-        id: 'animation-choices',
-        label: 'Animation choices',
-        contribution:
-          'Pays that cost on every frame — which is why transform and opacity are safe and width and height are not.',
-        lessonIds: ['lesson-10-02', 'lesson-10-03'],
-      },
-      {
-        id: 'javascript-execution',
-        label: 'JavaScript execution',
-        contribution:
-          'Competes for the same thread as rendering, so a long task blocks input and frames alike.',
-        lessonIds: ['lesson-12-03', 'lesson-05-05'],
-      },
-      {
-        id: 'interaction-responsiveness',
-        label: 'Interaction responsiveness',
-        contribution:
-          'What the user actually feels, and the only figure worth optimising against — measured, not assumed.',
-        lessonIds: ['lesson-12-05', 'lesson-14-03'],
+          'Decides whether the next change can be made without undoing the quality already paid for.',
+        lessonIds: [
+          'lesson-thinking-about-product-architecture',
+          'lesson-systematic-product-critique',
+        ],
       },
     ],
   },

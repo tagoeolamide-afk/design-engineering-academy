@@ -15,6 +15,7 @@ import {
   withReflectionAnswer,
   withVisit,
 } from '@/lib/progress/records';
+import { CURRICULUM_VERSION } from '@/lib/curriculum/version';
 import type {
   LessonProgressRecord,
   ProgressState,
@@ -74,6 +75,8 @@ export function makeState(
     lessons: Object.fromEntries(lessons.map((record) => [record.lessonId, record])),
     projects: Object.fromEntries(projects.map((record) => [record.projectId, record])),
     lastVisitedLessonId: null,
+    curriculumVersion: CURRICULUM_VERSION,
+    legacy: null,
   };
 }
 

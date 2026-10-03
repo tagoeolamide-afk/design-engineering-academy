@@ -20,6 +20,7 @@ import { useResourceStore } from '@/stores/resource-store';
 import { useSyncStore } from '@/stores/sync-store';
 import { createFakeSupabase, makeRow } from './fixtures/fake-supabase';
 import { completedLesson } from './fixtures/progress';
+import { CURRICULUM_VERSION } from '@/lib/curriculum/version';
 
 const USER = 'user-1';
 
@@ -28,6 +29,8 @@ function resetStores(): void {
     lessons: {},
     projects: {},
     lastVisitedLessonId: null,
+    curriculumVersion: CURRICULUM_VERSION,
+    legacy: null,
   });
   useNotesStore.getState().hydrateFromCloud({});
   useResourceStore.getState().hydrateFromCloud({});

@@ -120,12 +120,24 @@ describe('progress migration', () => {
   });
 
   it('survives corrupt input rather than taking the app down', () => {
+    /* Nothing readable at all: there is no stored document, so the result is a
+     * fresh one at the current curriculum version. */
     expect(migrateProgress(null, 1)).toEqual(EMPTY_PROGRESS_STATE);
     expect(migrateProgress('nonsense', 1)).toEqual(EMPTY_PROGRESS_STATE);
     expect(migrateProgress([], 1)).toEqual(EMPTY_PROGRESS_STATE);
-    expect(migrateProgress({ lessons: 'not an object' }, 1)).toEqual(
-      EMPTY_PROGRESS_STATE,
-    );
+  });
+
+  it('treats a payload that omits the curriculum version as pre-v2', () => {
+    /* An object that exists but states no version was written before curriculum
+     * versioning, which is exactly the case the upgrade notice is for. It must
+     * not be rounded up to the current version just because its contents were
+     * unreadable — that would hide a migration the learner should be told about. */
+    const migrated = migrateProgress({ lessons: 'not an object' }, 1);
+
+    expect(migrated.curriculumVersion).toBe(0);
+    expect(migrated.lessons).toEqual({});
+    expect(migrated.projects).toEqual({});
+    expect(migrated.legacy).toBeNull();
   });
 
   it('replaces a nonsense project status with a safe one', () => {
